@@ -98,8 +98,8 @@ a {
 /* Desktop Styles */
 @media only screen and (min-width: 961px) {
   .page {
-    width: 800px;
-    max-width: 800px;
+    width: 900px;
+    max-width: 900px;
     margin: 0 auto;
   }
 }

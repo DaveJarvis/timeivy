@@ -12,7 +12,11 @@
 	<script
 		 src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
 	</script>
+	<script
+		 src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js">
+	</script>
 	<script src="js/time.js"></script>
+	<script src="js/app.js"></script>
 </head>
 <body>
   <div class="page">
@@ -21,7 +25,7 @@
     </header>
     <nav class="section menu"></nav>
     <main class="section content">
-      <table>
+      <table class="time-sheet" cellpadding="0" cellspacing="0">
         <thead>
           <tr>
             <th>Day</th>
@@ -29,18 +33,30 @@
             <th>Ended</th>
             <th>Shift</th>
             <th>Total</th>
+            <th>Activity</th>
+            <th>Data 1</th>
+            <th>Data 2</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
+            <td class="time-day">
               1
             </td>
-            <td>
-              <input id="began-001" type="text" name="field" value="09:00AM" maxlength="8" size="8" class="time" tabindex="1" />
+            <td class="time-began">
+              <input id="b1" name="b1" type="text" value="09:00 AM" maxlength="8" size="8" class="time-entry data-entry" tabindex="1" />
             </td>
-            <td>
-              <input id="ended-001" type="text" name="field" value="09:15AM" maxlength="8" size="8" class="time" tabindex="2" />
+            <td class="time-ended">
+              <input id="e1" name="e1" type="text" value="09:15 AM" maxlength="8" size="8" class="time-entry data-entry" tabindex="2" />
+            </td>
+            <td class="time-shift">
+							<span id="s1">0</span>
+						</td>
+            <td class="time-total">
+							<span id="t1">0</span>
+						</td>
+            <td class="time-activity">
+              <input id="a1" name="a1" type="text" value="Refactor application to use servlet authentication" maxlength="48" size="48" class="data-entry" tabindex="3" />
             </td>
           </tr>
         </tbody>
