@@ -1,0 +1,6 @@
+[
+  ["2018-03-07", "07:45:00", "09:15:00", 0, 0, "Refactor application to use servlet authentication"],
+  ["2018-03-08", "08:45:00", "09:15:00", 0, 0, "Apply Cartesian coordinate system to internal logic"],
+  ["2018-03-09", "09:45:00", "19:15:00", 0, 0, "Revise unit tests to check for all failing conditions"]
+]
+

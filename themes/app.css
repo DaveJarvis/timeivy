@@ -3,42 +3,7 @@ body {
   font-size: 12px;
 }
 
-table.time-sheet {
-  border-collapse: collapse;
-  border: none;
-  padding: 0;
-}
-
-table.time-sheet thead tr {
-  border-bottom: 2px solid black;
-}
-
-table.time-sheet thead tr th {
-  padding-bottom: 2px;
-  padding-left: 8px;
-  padding-right: 8px;
-}
-
-.time-shift, .time-entry {
-  margin-left: 4px;
-  margin-right: 4px;
-}
-
-.data-entry {
-  border: 1px solid transparent;
-  background: #eeeeee;
-  padding: 2px;
-}
-
-.time-entry {
-  font-family: "Lucida Console", Monaco, monospace;
-}
-
-.data-entry:focus {
-  border: 1px solid black;
-}
-
-.time-day, .time-shift, .time-total {
-  text-align: right;
+td.jexcel_label {
+  display: none;
 }
 

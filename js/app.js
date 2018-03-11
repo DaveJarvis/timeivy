@@ -1,3 +1,24 @@
+"use strict";
+
+var timesheetChanged = function( obj, cell, value ) {
+  var rc = $(cell).prop('id').split( '-' );
+  var col = rc[0];
+  var row = rc[1];
+
+  // If the header is either Began or Ended, change the contents.
+  var header = $('#timesheet').jexcel('getHeader', col);
+
+  if( header.match( /began/i ) || header.match( /ended/i ) ) {
+    $('#timesheet').jexcel('setValue', cell, '42');
+  }
+
+  //console.log( value.toTime() );
+}
+
+var timesheetLoaded = function( obj ) {
+  console.log( obj );
+}
+
 $(document).ready(function() {
   /**
    * Convert time to HH:MMa format when any time input value changes.
