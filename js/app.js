@@ -19,10 +19,11 @@ var timesheetChanged = function( obj, cell, value ) {
   if( header.match( /began/i ) || header.match( /ended/i ) ) {
     // If the value has already been parsed, don't parse it again.
     if( value !== value.toTime() && preventRecursion < MAX_RECURSION ) {
-      $('#timesheet').jexcel('setValue', cell, value.toTime() );
+      $('#timesheet').jexcel( 'setValue', cell, value.toTime() );
       preventRecursion++;
 
-      computeTime( row );
+      computeShiftTime( row );
+      computeTotalTime( row );
     }
   }
 }
@@ -31,11 +32,25 @@ var timesheetChanged = function( obj, cell, value ) {
  * This will compute the shift time for the given row.
  */
 var computeShiftTime = function( row ) {
-  console.log( $.fn.jexcel.defaults.timesheet.colHeaders );
+  row = parseInt(row);
+  row += 1;
+
+  var shiftBegan = $('#timesheet').jexcel( 'getValue', 'B' + row );
+  var shiftEnded = $('#timesheet').jexcel( 'getValue', 'C' + row );
+
+  var momentBegan = moment.utc( shiftBegan, 'hh:mm a' );
+  var momentEnded = moment.utc( shiftEnded, 'hh:mm a' );
+
+  var duration = moment.duration( momentEnded.diff( momentBegan ) );
+
+  // Update the amount of time worked for the shift.
+  $('#timesheet').jexcel( 'setValue', 'D' + row, duration.asHours() );
 }
 
 /**
- * This will compute the total time starting from the given row while the
+ * This will compute the total time starting from the first date that can
+ *
+ * the given row while the
  * date is the same day for all contiguous rows.
  */
 var computeTotalTime = function( row ) {
@@ -87,4 +102,3 @@ $(document).ready(function() {
     $(shiftTimeField).text( duration.asHours() );
   });
 });
-

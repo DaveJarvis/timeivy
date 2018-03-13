@@ -1,6 +1,13 @@
 "use strict";
 
 /**
+ * See https://stackoverflow.com/a/14760377
+ */
+String.prototype.padLeft = function (paddingValue) {
+   return String(paddingValue + this).slice(-paddingValue.length);
+};
+
+/**
  * See https://stackoverflow.com/a/49185071/59087
  */
 String.prototype.toTime = function () {
@@ -52,9 +59,8 @@ String.prototype.toTime = function () {
 	}
 
   var result =
-		(""+hours).padStart( 2, "0" ) + ":" + (""+minutes).padStart( 2, "0" ) +
+		(""+hours).padLeft( "00" ) + ":" + (""+minutes).padLeft( "00" ) +
     " " + (post_meridiem ? "PM" : "AM");
 
 	return result;
 };
-
