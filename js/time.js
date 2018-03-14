@@ -3,14 +3,14 @@
 /**
  * See https://stackoverflow.com/a/14760377
  */
-String.prototype.padLeft = function (paddingValue) {
-   return String(paddingValue + this).slice(-paddingValue.length);
+String.prototype.padLeft = function( padding ) {
+   return String( padding + this ).slice( -padding.length );
 };
 
 /**
  * See https://stackoverflow.com/a/49185071/59087
  */
-String.prototype.toTime = function () {
+String.prototype.toTime = function() {
 	var time = this;
 	var post_meridiem = false;
 	var ante_meridiem = false;
@@ -64,3 +64,4 @@ String.prototype.toTime = function () {
 
 	return result;
 };
+
