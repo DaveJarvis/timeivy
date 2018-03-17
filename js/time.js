@@ -1,6 +1,9 @@
 "use strict";
 
 /**
+ * Pads a string with the given string. This is used to zero-pad the starting
+ * times.
+ *
  * See https://stackoverflow.com/a/14760377
  */
 String.prototype.padLeft = function( padding ) {
@@ -8,6 +11,11 @@ String.prototype.padLeft = function( padding ) {
 };
 
 /**
+ * Converts a string representing a user-entered time into a normal format.
+ * The input can be of practically any sensible form to represent a time,
+ * including: 1p, 1300, 123, 12, 2355, 215p, 1a, etc. The output is a
+ * string in 12-hour format (HH:MM a), for example: 01:00 PM.
+ *
  * See https://stackoverflow.com/a/49185071/59087
  */
 String.prototype.toTime = function() {

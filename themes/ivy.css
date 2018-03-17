@@ -1,0 +1,45 @@
+/**
+ * Cell selection is handled by the app.
+ */
+table.ivy {
+  border-collapse: collapse;
+  empty-cells: show;
+  white-space: nowrap;
+
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+table.ivy th {
+  background-color: rgb( 243, 243, 243 );
+  font-weight: normal;
+}
+
+table.ivy th, table.ivy td {
+  margin: 4px;
+  padding: 4px;
+  border-left: 1px solid rgb( 204, 204, 204 );
+}
+
+table.ivy th:last-child, table.ivy td:last-child {
+  border-right: 1px solid rgb( 204, 204, 204 );
+}
+
+table.ivy th, table.ivy tr:first-child {
+  border-top: 1px solid rgb( 204, 204, 204 );
+}
+
+table.ivy td {
+  border-bottom: 1px solid rgb( 204, 204, 204 );
+}
+
+/**
+ * Override the border settings to ensure the active cell is distinct.
+ */
+.active {
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid black !important;
+}
+
