@@ -54,17 +54,30 @@
     activeCellClassName: 'active',
     pageSize: 30,
     modeNavigate: [
-      { k: 'left', f: 'navigateLeft' },
-      { k: 'right', f: 'navigateRight' },
+      { k: 'left',      f: 'navigateLeft' },
+      { k: 'right',     f: 'navigateRight' },
+      { k: 'up',        f: 'navigateUp' },
+      { k: 'down',      f: 'navigateDown' },
+      { k: 'ctrl+left', f: 'navigateLeftSkip' },
+      { k: 'ctrl+right',f: 'navigateRightSkip' },
+      { k: 'ctrl+up',   f: 'navigateUpSkip' },
+      { k: 'ctrl+down', f: 'navigateDownSkip' },
+      { k: 'pageup',    f: 'navigatePageUp' },
+      { k: 'pagedown',  f: 'navigatePageDown' },
+      { k: 'home',      f: 'navigateRowHome' },
+      { k: 'end',       f: 'navigateRowEnd' },
+      { k: 'ctrl+home', f: 'navigateHome' },
+      { k: 'ctrl+end',  f: 'navigateEnd' },
       { k: 'shift+tab', f: 'navigateLeft' },
-      { k: 'tab', f: 'navigateRight' },
+      { k: 'tab',       f: 'navigateRight' },
+      { k: 'f2',        f: 'modeEdit' },
     ],
     modeEdit: [
       { k: 'esc', f: 'modeEdit' },
     ]
   };
 
-  // Active cell starts in the upper-left.
+  // This represents the data model for tracking the active cell.
   var cell = [1, 1];
 
   function Plugin( element, options ) {
@@ -78,11 +91,39 @@
   }
 
   $.extend( Plugin.prototype, {
+    /**
+     * Called during plugin construction to initialize the timesheet.
+     */
     init: function() {
+      // Start in navigation mode.
+      this.bindNavigateMode();
+
+      // Allow click (mouse, tap, etc.) navigation.
+      this.bindNavigationClick();
+
+      // Activate the upper-left cell.
+      this.navigate( 1, 1 );
+    },
+    bindNavigationClick: function() {
+			let plugin = this;
+      let table = plugin.getTableBodyElement();
+
+      $(table).on( 'click', 'td', function() {
+				let col = $(this).parent().children().index($(this));
+				let row = $(this).parent().parent().children().index($(this).parent());
+				plugin.navigate( row + 1, col + 1 );
+      } );
+    },
+    /**
+     * Binds the keyboard to cell model navigation.
+     */
+    bindNavigateMode: function() {
+      Mousetrap.reset();
+
       let plugin = this;
       let nav = this.settings.modeNavigate;
 
-      // Apply keyboard bindings.
+      // Apply configurable keyboard bindings.
       for( let i = 0; i < nav.length; i++ ) {
         let k = nav[i].k;
         let f = nav[i].f;
@@ -91,57 +132,99 @@
           eval( 'plugin.' + f ).call( plugin );
         });
       }
-
-      // Jump to the starting cell.
-      this.navigate( 1, 1 );
     },
+    /**
+     * Primitive to get the active cell row from the model.
+     *
+     * @return The active cell row, 1-based.
+     */
     getCellRow: function() {
       return this._cell[0];
     },
+    /**
+     * Primitive to get the active cell column from the model.
+     *
+     * @return The active cell column, 1-based.
+     */
     getCellCol: function() {
       return this._cell[1];
     },
-    getTableCellElement: function() {
+    /**
+     * Primitive to get the table body via jQuery.
+     *
+     * @return An element that represents the tbody containing cells.
+     */
+    getTableBodyElement: function() {
       return $(this.element)[0];
     },
+    /**
+     * Primitive to get the active table cell element.
+     *
+     * @return This returns a td element that can be styled.
+     */
     getTableCell: function() {
-      let table = this.getTableCellElement();
+      let table = this.getTableBodyElement();
       let row = this.getCellRow();
       let col = this.getCellCol();
       return table.rows[ row - 1 ].cells[ col - 1 ];
     },
+    /**
+     * Primitive to change the cell row without updating the user interface.
+     * Any value that exceeds the table range is set to the extent of the
+     * table range.
+     *
+     * @postcondition The cell data model row is set to the given row.
+     */
     setCellRow: function( row ) {
-      let table = this.getTableCellElement();
+      let table = this.getTableBodyElement();
       let max = table.rows.length;
 
-      row = row > max ? max - 1 : row;
-      row = row < 1 ? 1 : row;
+      row = row > max ?  max : (row < 1 ? 1 : row);
 
       this._cell[0] = row;
     },
+    /**
+     * Primitive to change the cell column without updating the user interface.
+     * Any value that exceeds the table range is set to the extent of the
+     * table range.
+     *
+     * @postcondition The cell data model column is set to the given column.
+     */
     setCellCol: function( col ) {
-      let table = this.getTableCellElement();
+      let table = this.getTableBodyElement();
       let row = this.getCellRow();
       let max = table.rows[ row - 1 ].cells.length;
 
-      col = col > max ? max : col;
-      col = col < 1 ? 1 : col;
+      col = col > max ? max : (col < 1 ? 1 : col);
 
       this._cell[1] = col;
     },
+    /**
+     * Primitive to add the active class to the table cell represented by
+     * the cell model.
+     */
+    activate: function() {
+      let tableCell = this.getTableCell();
+      $(tableCell).addClass( this.settings.activeCellClassName );
+    },
+    /**
+     * Primitive to remove the active class from the table cell represented by
+     * the cell model.
+     */
+    deactivate: function() {
+      let tableCell = this.getTableCell();
+      $(tableCell).removeClass( this.settings.activeCellClassName );
+    },
+    /**
+     * Changes the active cell. This deactivates the cell from the model, uses
+     * the primtives to adjust the model's row and column, then activates
+     * the cell from the model.
+     */
     navigate: function( row, col ) {
       this.deactivate();
       this.setCellRow( row );
       this.setCellCol( col );
       this.activate();
-    },
-    activate: function() {
-      let tableCell = this.getTableCell();
-      $(tableCell).addClass( this.settings.activeCellClassName );
-    },
-    deactivate: function() {
-      let tableCell = this.getTableCell();
-      $(tableCell).removeClass( this.settings.activeCellClassName );
     },
     navigateUp: function() {
       this.navigate( this.getCellRow() - 1, this.getCellCol() );
@@ -154,6 +237,18 @@
     },
     navigateRight: function() {
       this.navigate( this.getCellRow(), this.getCellCol() + 1 );
+    },
+    navigateHome: function() {
+      this.navigate( 1, 1 );
+    },
+    navigateEnd: function() {
+      this.navigate( Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER );
+    },
+    navigateRowHome: function() {
+      this.navigate( this.getCellRow(), Number.MIN_SAFE_INTEGER );
+    },
+    navigateRowEnd: function() {
+      this.navigate( this.getCellRow(), Number.MAX_SAFE_INTEGER );
     },
     navigatePageUp: function() {
       this.navigate(
@@ -170,16 +265,6 @@
     },
     modeEdit: function() {
       console.log( "Edit Mode!" );
-    },
-    navigateRowHome: function() {
-      this.navigate( 0, this.getCellCol() );
-    },
-    navigateRowEnd: function() {
-    },
-    navigateColHome: function() {
-      this.navigate( this.getCellRow(), 0 );
-    },
-    navigateColEnd: function() {
     },
     save: function() {
       console.log( "Save!" );
@@ -208,3 +293,7 @@
   window.Plugin = Plugin;
 })(jQuery, window, document);
 
+
+Mousetrap.prototype.stopCallback = function(e, element, combo) {
+  return false;
+}

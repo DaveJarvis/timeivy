@@ -1,42 +1,70 @@
 /**
- * Cell selection is handled by the app.
+ * To achieve a 1-pixel border, collapse the entire table borders and
+ * style the various rows and cells individually.
  */
 table.ivy {
   border-collapse: collapse;
   empty-cells: show;
   white-space: nowrap;
 
+  /**
+   * Cell selection is handled by the app.
+   */
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
 }
 
+/**
+ * Spreadsheets, traditionally, don't have bold headings.
+ */
 table.ivy th {
   background-color: rgb( 243, 243, 243 );
   font-weight: normal;
 }
 
+/**
+ * Give some space around and within cells.
+ */
 table.ivy th, table.ivy td {
   margin: 4px;
   padding: 4px;
+}
+
+/**
+ * All cells have a left border, but no right.
+ */
+table.ivy th, table.ivy td {
   border-left: 1px solid rgb( 204, 204, 204 );
 }
 
+/**
+ * The last cell in a row requires a right border.
+ */
 table.ivy th:last-child, table.ivy td:last-child {
   border-right: 1px solid rgb( 204, 204, 204 );
 }
 
-table.ivy th, table.ivy tr:first-child {
+/**
+ * All cells have a top border, but no bottom.
+ */
+table.ivy tr {
   border-top: 1px solid rgb( 204, 204, 204 );
 }
 
-table.ivy td {
+/**
+ * The last row requires a bottom border.
+ */
+table.ivy tr:last-child {
   border-bottom: 1px solid rgb( 204, 204, 204 );
 }
 
 /**
  * Override the border settings to ensure the active cell is distinct.
+ * Due to the way borders are configured for the left/right/top/bottom per
+ * row and individual cell, setting the border for the active cell here
+ * ensures that all of its edges appear properly.
  */
 .active {
   background-color: rgba(0, 0, 0, 0.05);
