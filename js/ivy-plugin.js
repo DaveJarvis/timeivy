@@ -18,7 +18,9 @@
  * Navigate Mode Key Bindings
  * ========================================================
  * Insert           - [insert row after]
+ * Delete           - [delete cell contents]
  * F2               - [edit mode]
+ * Enter            - [edit mode]
  * <any char>       - [edit mode] [bubble keypress]
  * Spacebar         - [edit mode] [clear text] [bubble keypress]
  * Up Arrow         - [active cell up]
@@ -30,7 +32,7 @@
  * Tab              - [active cell right]
  * Shift+tab        - [active cell left]
  * Ctrl+d           - [duplicate cell above]
- * Ctrl+s           - [save]
+ * Ctrl+s           - [save timesheet]
  * Ctrl+Up Arrow    - [skip all empty cells up]
  * Ctrl+Down Arrow  - [skip all empty cells down down]
  * Ctrl+Left Arrow  - [active cell left]
@@ -54,26 +56,33 @@
     activeCellClassName: 'active',
     pageSize: 30,
     modeNavigate: [
-      { k: 'left',      f: 'navigateLeft' },
-      { k: 'right',     f: 'navigateRight' },
-      { k: 'up',        f: 'navigateUp' },
-      { k: 'down',      f: 'navigateDown' },
-      { k: 'ctrl+left', f: 'navigateLeftSkip' },
-      { k: 'ctrl+right',f: 'navigateRightSkip' },
-      { k: 'ctrl+up',   f: 'navigateUpSkip' },
-      { k: 'ctrl+down', f: 'navigateDownSkip' },
-      { k: 'pageup',    f: 'navigatePageUp' },
-      { k: 'pagedown',  f: 'navigatePageDown' },
-      { k: 'home',      f: 'navigateRowHome' },
-      { k: 'end',       f: 'navigateRowEnd' },
-      { k: 'ctrl+home', f: 'navigateHome' },
-      { k: 'ctrl+end',  f: 'navigateEnd' },
-      { k: 'shift+tab', f: 'navigateLeft' },
-      { k: 'tab',       f: 'navigateRight' },
-      { k: 'f2',        f: 'modeEdit' },
+      { k: 'left',        f: 'navigateLeft' },
+      { k: 'right',       f: 'navigateRight' },
+      { k: 'up',          f: 'navigateUp' },
+      { k: 'down',        f: 'navigateDown' },
+      { k: 'ctrl+left',   f: 'navigateLeftSkip' },
+      { k: 'ctrl+right',  f: 'navigateRightSkip' },
+      { k: 'ctrl+up',     f: 'navigateUpSkip' },
+      { k: 'ctrl+down',   f: 'navigateDownSkip' },
+      { k: 'pageup',      f: 'navigatePageUp' },
+      { k: 'pagedown',    f: 'navigatePageDown' },
+      { k: 'home',        f: 'navigateRowHome' },
+      { k: 'end',         f: 'navigateRowEnd' },
+      { k: 'ctrl+home',   f: 'navigateHome' },
+      { k: 'ctrl+end',    f: 'navigateEnd' },
+      { k: 'shift+tab',   f: 'navigateLeft' },
+      { k: 'tab',         f: 'navigateRight' },
+      { k: 'ctrl+s',      f: 'timesheetSave' },
+      { k: 'f2',          f: 'cellEditStart' },
+      { k: 'enter',       f: 'cellEditStart' },
+      { k: 'space',       f: 'cellEditStartBlank' },
+      { k: 'insert',      f: 'timesheetInsertRowAfter' },
+      { k: 'ctrl+insert', f: 'timesheetInsertRowBefore' },
     ],
     modeEdit: [
-      { k: 'esc', f: 'modeEdit' },
+      { k: 'esc',       f: 'editEscape' },
+      { k: 'up',        f: 'editUp' },
+      { k: 'down',      f: 'editDown' },
     ]
   };
 
@@ -98,13 +107,22 @@
       // Start in navigation mode.
       this.bindNavigateMode();
 
+      // Make sure that alpha numerics, punctuation, etc. start edit mode.
+      this.bindEditKeys();
+
       // Allow click (mouse, tap, etc.) navigation.
       this.bindNavigationClick();
 
       // Activate the upper-left cell.
       this.navigate( 1, 1 );
     },
+		/**
+     * Binds single mouse clicks to navigation.
+     */
     bindNavigationClick: function() {
+      this.cellEditStop();
+      this.modeNavigate();
+
 			let plugin = this;
       let table = plugin.getTableBodyElement();
 
@@ -113,6 +131,29 @@
 				let row = $(this).parent().parent().children().index($(this).parent());
 				plugin.navigate( row + 1, col + 1 );
       } );
+    },
+    /**
+     * When in navigation mode, printable characters triger edit mode.
+     */
+    bindEditKeys: function() {
+      console.log( 'bind edit keys' );
+      let plugin = this;
+
+      (function(Mousetrap) {
+        Mousetrap.prototype.isPrintable = function( e ) {
+					return String.fromCharCode( e.keyCode ).match( /(\w|\s)/g ) !== null;
+        };
+
+        Mousetrap.prototype.handleKey = function( character, modifiers, e ) {
+          if( this.isPrintable( e ) ) {
+            plugin.cellEditStart();
+          }
+
+          return this._handleKey( character, modifiers, e );
+        };
+
+        Mousetrap.init();
+      }) (Mousetrap);
     },
     /**
      * Binds the keyboard to cell model navigation.
@@ -158,7 +199,8 @@
       return $(this.element)[0];
     },
     /**
-     * Primitive to get the active table cell element.
+     * Primitive to get the active table cell element, which can be referenced
+     * using jQuery as $(this.getTableCell()).
      *
      * @return This returns a td element that can be styled.
      */
@@ -227,9 +269,11 @@
       this.activate();
     },
     navigateUp: function() {
+      this.cellEditStop();
       this.navigate( this.getCellRow() - 1, this.getCellCol() );
     },
     navigateDown: function() {
+      this.cellEditStop();
       this.navigate( this.getCellRow() + 1, this.getCellCol() );
     },
     navigateLeft: function() {
@@ -261,23 +305,38 @@
       );
     },
     modeNavigate: function() {
-      console.log( "Nagivate Mode!" );
+      console.log( "Mode navigate" );
     },
-    modeEdit: function() {
-      console.log( "Edit Mode!" );
+    cellEditStartBlank: function() {
+      // Clear out the cell and then begin editing.
+      this.cellEditStart();
     },
-    save: function() {
-      console.log( "Save!" );
+    cellEditStart: function() {
+      console.log( "Start edit cell" );
+      let tableCell = this.getTableCell();
+      console.log( $(tableCell).width() );
+    },
+    cellEditStop: function() {
+      console.log( "Stop edit cell" );
+      let tableCell = this.getTableCell();
+    },
+    timesheetSave: function() {
+      console.log( "Save timesheet" );
+      this.cellEditStop();
+    },
+    timesheetInsertRowBefore: function() {
+      console.log( "Insert row before" );
+      this.cellEditStop();
+    },
+    timesheetInsertRowAfter: function() {
+      console.log( "Insert row after" );
+      this.cellEditStop();
     },
     undo: function() {
       console.log( "Undo!" );
     },
     redo: function() {
       console.log( "Redo!" );
-    },
-    load: function( url ) {
-    },
-    post: function( url ) {
     }
   } );
 
@@ -293,7 +352,7 @@
   window.Plugin = Plugin;
 })(jQuery, window, document);
 
-
 Mousetrap.prototype.stopCallback = function(e, element, combo) {
+  e.preventDefault();
   return false;
 }
