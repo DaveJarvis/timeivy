@@ -56,33 +56,36 @@
     activeCellClassName: 'active',
     pageSize: 30,
     modeNavigate: [
-      { k: 'left',        f: 'navigateLeft' },
-      { k: 'right',       f: 'navigateRight' },
-      { k: 'up',          f: 'navigateUp' },
-      { k: 'down',        f: 'navigateDown' },
-      { k: 'ctrl+left',   f: 'navigateLeftSkip' },
-      { k: 'ctrl+right',  f: 'navigateRightSkip' },
-      { k: 'ctrl+up',     f: 'navigateUpSkip' },
-      { k: 'ctrl+down',   f: 'navigateDownSkip' },
-      { k: 'pageup',      f: 'navigatePageUp' },
-      { k: 'pagedown',    f: 'navigatePageDown' },
-      { k: 'home',        f: 'navigateRowHome' },
-      { k: 'end',         f: 'navigateRowEnd' },
-      { k: 'ctrl+home',   f: 'navigateHome' },
-      { k: 'ctrl+end',    f: 'navigateEnd' },
-      { k: 'shift+tab',   f: 'navigateLeft' },
-      { k: 'tab',         f: 'navigateRight' },
-      { k: 'ctrl+s',      f: 'timesheetSave' },
-      { k: 'f2',          f: 'cellEditStart' },
-      { k: 'enter',       f: 'cellEditStart' },
-      { k: 'space',       f: 'cellEditStartBlank' },
-      { k: 'insert',      f: 'timesheetInsertRowAfter' },
-      { k: 'ctrl+insert', f: 'timesheetInsertRowBefore' },
+      { k: 'left',         f: 'navigateLeft' },
+      { k: 'right',        f: 'navigateRight' },
+      { k: 'up',           f: 'navigateUp' },
+      { k: 'down',         f: 'navigateDown' },
+      { k: 'ctrl+left',    f: 'navigateLeftSkip' },
+      { k: 'ctrl+right',   f: 'navigateRightSkip' },
+      { k: 'ctrl+up',      f: 'navigateUpSkip' },
+      { k: 'ctrl+down',    f: 'navigateDownSkip' },
+      { k: 'pageup',       f: 'navigatePageUp' },
+      { k: 'pagedown',     f: 'navigatePageDown' },
+      { k: 'home',         f: 'navigateRowHome' },
+      { k: 'end',          f: 'navigateRowEnd' },
+      { k: 'ctrl+home',    f: 'navigateHome' },
+      { k: 'ctrl+end',     f: 'navigateEnd' },
+      { k: 'shift+tab',    f: 'navigateLeft' },
+      { k: 'tab',          f: 'navigateRight' },
+      { k: 'ctrl+s',       f: 'timesheetSave' },
+      { k: 'ctrl+z',       f: 'timesheetUndo' },
+      { k: 'ctrl+shift+z', f: 'timesheetRedo' },
+      { k: 'f2',           f: 'cellEditStart' },
+      { k: 'enter',        f: 'cellEditStart' },
+      { k: 'space',        f: 'cellEditStartBlank' },
+      { k: 'del',          f: 'cellEditDelete' },
+      { k: 'ins',          f: 'timesheetInsertRowAfter' },
+      { k: 'ctrl+ins',     f: 'timesheetInsertRowBefore' },
     ],
     modeEdit: [
-      { k: 'esc',       f: 'editEscape' },
-      { k: 'up',        f: 'editUp' },
-      { k: 'down',      f: 'editDown' },
+      { k: 'esc',          f: 'editEscape' },
+      { k: 'up',           f: 'editUp' },
+      { k: 'down',         f: 'editDown' },
     ]
   };
 
@@ -133,19 +136,19 @@
       } );
     },
     /**
-     * When in navigation mode, printable characters triger edit mode.
+     * In navigation mode, a printable character keypress triggers editing.
      */
     bindEditKeys: function() {
-      console.log( 'bind edit keys' );
       let plugin = this;
 
       (function(Mousetrap) {
-        Mousetrap.prototype.isPrintable = function( e ) {
-					return String.fromCharCode( e.keyCode ).match( /(\w|\s)/g ) !== null;
-        };
-
         Mousetrap.prototype.handleKey = function( character, modifiers, e ) {
-          if( this.isPrintable( e ) ) {
+          // If the character code is numeric, it is a non-printable char.
+          var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
+
+          // Start cell editing when a printable character is typed.
+          if( e.type === 'keypress' && charCode && !e.ctrlKey ) {
+            e.stopImmediatePropagation();
             plugin.cellEditStart();
           }
 
@@ -279,7 +282,13 @@
     navigateLeft: function() {
       this.navigate( this.getCellRow(), this.getCellCol() - 1 );
     },
+    navigateLeftSkip: function() {
+      this.navigate( this.getCellRow(), this.getCellCol() - 1 );
+    },
     navigateRight: function() {
+      this.navigate( this.getCellRow(), this.getCellCol() + 1 );
+    },
+    navigateRightSkip: function() {
       this.navigate( this.getCellRow(), this.getCellCol() + 1 );
     },
     navigateHome: function() {
@@ -320,20 +329,26 @@
       console.log( "Stop edit cell" );
       let tableCell = this.getTableCell();
     },
+    cellEditDelete: function() {
+      console.log( 'delete cell' );
+      let tableCell = this.getTableCell();
+      $(tableCell).text( '' );
+    },
     timesheetSave: function() {
       console.log( "Save timesheet" );
       this.cellEditStop();
     },
     timesheetInsertRowBefore: function() {
       console.log( "Insert row before" );
-      this.cellEditStop();
     },
     timesheetInsertRowAfter: function() {
       console.log( "Insert row after" );
-      this.cellEditStop();
     },
-    undo: function() {
-      console.log( "Undo!" );
+    timesheetUndo: function() {
+      console.log( "Timesheet undo" );
+    },
+    timesheetRedo: function() {
+      console.log( "Timesheet redo" );
     },
     redo: function() {
       console.log( "Redo!" );

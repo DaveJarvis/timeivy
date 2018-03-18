@@ -1,3 +1,9 @@
+:root {
+  --border-width: 1px;
+  --border-style: solid;
+  --border-colour: rgb( 204, 204, 204 );
+}
+
 /**
  * To achieve a 1-pixel border, collapse the entire table borders and
  * style the various rows and cells individually.
@@ -36,7 +42,7 @@ table.ivy th, table.ivy td {
  * All cells have a left border, but no right.
  */
 table.ivy th, table.ivy td {
-  border-left: 1px solid rgb( 204, 204, 204 );
+  border-left: 1px solid var(--border-colour);
 }
 
 /**
@@ -58,6 +64,13 @@ table.ivy tr {
  */
 table.ivy tr:last-child {
   border-bottom: 1px solid rgb( 204, 204, 204 );
+}
+
+/**
+ * 
+ */
+table.ivy .readonly {
+  color: gray;
 }
 
 /**
