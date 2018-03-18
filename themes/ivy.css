@@ -5,17 +5,20 @@
 }
 
 /**
- * To achieve a 1-pixel border, collapse the entire table borders and
- * style the various rows and cells individually.
+ * To achieve a 1-pixel border, style only the bottom and border-right
+ * edges. The cells themselves will style the left and top borders.
  */
 table.ivy {
-  border-collapse: collapse;
-  empty-cells: show;
+  border-collapse: separate;
   white-space: nowrap;
+  empty-cells: show;
+  border-top: 1px solid rgba( 0, 0, 0, 0 );
+  border-left: 1px solid rgba( 0, 0, 0, 0 );
+  border-right: 1px solid rgb( 204, 204, 204 );
+  border-bottom: 1px solid rgb( 204, 204, 204 );
+  background-clip: padding-box;
 
-  /**
-   * Cell selection is handled by the app.
-   */
+  /* Cell selection is handled by the app. */
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
@@ -39,35 +42,23 @@ table.ivy th, table.ivy td {
 }
 
 /**
- * All cells have a left border, but no right.
+ * All cells have a top-left border and transparent right.
  */
 table.ivy th, table.ivy td {
-  border-left: 1px solid var(--border-colour);
-}
-
-/**
- * The last cell in a row requires a right border.
- */
-table.ivy th:last-child, table.ivy td:last-child {
-  border-right: 1px solid rgb( 204, 204, 204 );
-}
-
-/**
- * All cells have a top border, but no bottom.
- */
-table.ivy tr {
   border-top: 1px solid rgb( 204, 204, 204 );
+  border-left: 1px solid rgb( 204, 204, 204 );
+  border-right: 1px solid rgba( 0, 0, 0, 0 );
 }
 
 /**
- * The last row requires a bottom border.
- */
-table.ivy tr:last-child {
-  border-bottom: 1px solid rgb( 204, 204, 204 );
+* Editable cells have a transparent bottom.
+*/
+table.ivy td {
+  border-bottom: 1px solid rgba( 0, 0, 0, 0 );
 }
 
 /**
- * 
+ * Show items as disabled.
  */
 table.ivy .readonly {
   color: gray;
@@ -80,7 +71,6 @@ table.ivy .readonly {
  * ensures that all of its edges appear properly.
  */
 .active {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba( 0, 0, 0, 0.05 );
   border: 1px solid black !important;
 }
-
