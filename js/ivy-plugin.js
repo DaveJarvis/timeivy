@@ -116,8 +116,8 @@
       // Allow click (mouse, tap, etc.) navigation.
       this.bindNavigationClick();
 
-      // Activate the upper-left cell.
-      this.navigate( 1, 1 );
+      // Highlight the default cell location.
+      this.activate();
     },
 		/**
      * Binds single mouse clicks to navigation.
@@ -211,6 +211,7 @@
       let table = this.getTableBodyElement();
       let row = this.getCellRow();
       let col = this.getCellCol();
+
       return table.rows[ row - 1 ].cells[ col - 1 ];
     },
     /**
@@ -292,7 +293,7 @@
       this.navigate( this.getCellRow(), this.getCellCol() + 1 );
     },
     navigateHome: function() {
-      this.navigate( 1, 1 );
+      this.navigate( Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER );
     },
     navigateEnd: function() {
       this.navigate( Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER );
