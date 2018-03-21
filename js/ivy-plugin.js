@@ -119,20 +119,20 @@
       // Highlight the default cell location.
       this.activate();
     },
-		/**
+    /**
      * Binds single mouse clicks to navigation.
      */
     bindNavigationClick: function() {
       this.cellEditStop();
       this.modeNavigate();
 
-			let plugin = this;
+      let plugin = this;
       let table = plugin.getTableBodyElement();
 
       $(table).on( 'click', 'td', function() {
-				let col = $(this).parent().children().index($(this));
-				let row = $(this).parent().parent().children().index($(this).parent());
-				plugin.navigate( row + 1, col + 1 );
+        let col = $(this).parent().children().index($(this));
+        let row = $(this).parent().parent().children().index($(this).parent());
+        plugin.navigate( row + 1, col + 1 );
       } );
     },
     /**
