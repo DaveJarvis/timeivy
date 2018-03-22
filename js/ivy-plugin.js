@@ -232,11 +232,12 @@
     },
     /**
      * Primitive to sanitize the row and column values. This will return
-     * 1 if index is less than 1, or max if index is greater than max,
-     * otherwise this returns the index.
+     * MIN_INDEX if index is less than MIN_INDEX, or max if index is
+     * greater than max, otherwise this returns the index.
      *
      * @param {number} i The row or column index to sanitize.
      * @param {number} max The maximum extent allowed for the index value.
+     * @return {number} Sanitized cell index number.
      *
      * @private
      */
@@ -295,7 +296,7 @@
      */
     setCellRow: function( row ) {
       let table = this.getTableBodyElement();
-      let max = table.rows.length;
+      let max = table.rows.length - 1;
 
       this._cell[0] = this.sanitizeCellIndex( row, max );
     },
@@ -311,7 +312,7 @@
     setCellCol: function( col ) {
       let table = this.getTableBodyElement();
       let row = this.getCellRow();
-      let max = table.rows[ row ].cells.length;
+      let max = table.rows[ row ].cells.length - 1;
 
       this._cell[1] = this.sanitizeCellIndex( col, max );
     },
@@ -357,7 +358,7 @@
     },
     /**
      * Helper method for navigating to a different row within the active
-     * column. This first stops edit mode before navigating away.
+     * column.
      *
      * @param {number} skip The number of cells to move.
      *
@@ -365,6 +366,17 @@
      */
     navigateRow: function( skip ) {
       this.navigate( this.getCellRow() + skip, this.getCellCol() );
+    },
+    /**
+     * Helper method for navigating to a different column within the active
+     * row.
+     *
+     * @param {number} skip The number of cells to move.
+     *
+     * @public
+     */
+    navigateCol: function( skip ) {
+      this.navigate( this.getCellRow(), this.getCellCol() + skip );
     },
     /**
      * @public
@@ -406,25 +418,25 @@
      * @public
      */
     navigateLeft: function() {
-      this.navigate( this.getCellRow(), this.getCellCol() - 1 );
+      this.navigateCol( -1 );
     },
     /**
      * @public
      */
     navigateLeftSkip: function() {
-      this.navigate( this.getCellRow(), this.getCellCol() - 1 );
+      this.navigateCol( -1 );
     },
     /**
      * @public
      */
     navigateRight: function() {
-      this.navigate( this.getCellRow(), this.getCellCol() + 1 );
+      this.navigateCol( +1 );
     },
     /**
      * @public
      */
     navigateRightSkip: function() {
-      this.navigate( this.getCellRow(), this.getCellCol() + 1 );
+      this.navigateCol( +1 );
     },
     /**
      * @public
@@ -442,13 +454,13 @@
      * @public
      */
     navigateRowHome: function() {
-      this.navigate( this.getCellRow(), MIN_INDEX );
+      this.navigateCol( -MAX_INDEX );
     },
     /**
      * @public
      */
     navigateRowEnd: function() {
-      this.navigate( this.getCellRow(), MAX_INDEX );
+      this.navigateCol( +MAX_INDEX );
     },
     /**
      * @public
