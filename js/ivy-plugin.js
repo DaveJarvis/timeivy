@@ -330,6 +330,12 @@
     navigatePageDown: function() {
       this.navigateRow( +this.settings.pageSize );
     },
+    navigateUpSkip: function() {
+      console.log( 'Navigate up skip' );
+    },
+    navigateDownSkip: function() {
+      console.log( 'Navigate down skip' );
+    },
     navigateUp: function() {
       this.navigateRow( -1 );
     },
