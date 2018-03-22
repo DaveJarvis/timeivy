@@ -52,7 +52,7 @@
   'use strict';
 
   /** @const */
-  const MIN_INDEX = 1;
+  const MIN_INDEX = 0;
   /** @const */
   const MAX_INDEX = 1000;
 
@@ -115,7 +115,7 @@
     this.settings = $.extend( {}, defaults, options );
     this._defaults = defaults;
     this._name = pluginName;
-    this._cell = [1, 1];
+    this._cell = [MIN_INDEX, MIN_INDEX];
     this._$cellInput = false;
     this._navigationMode = true;
     this.init();
@@ -154,7 +154,7 @@
       let col = $cell.parent().children().index($cell);
       let row = $cell.parent().parent().children().index($cell.parent());
 
-      this.navigate( row + 1, col + 1 );
+      this.navigate( row, col );
     },
     /**
      * Binds single mouse clicks to navigation.
@@ -235,18 +235,18 @@
      * 1 if index is less than 1, or max if index is greater than max,
      * otherwise this returns the index.
      *
-     * @param {number} index The row or column index to sanitize.
+     * @param {number} i The row or column index to sanitize.
      * @param {number} max The maximum extent allowed for the index value.
      *
      * @private
      */
-    sanitizeCellIndex: function( index, max ) {
-      return index = index > max ? max : (index < 1 ? 1 : index);
+    sanitizeCellIndex: function( i, max ) {
+      return i = i > max ? max : (i < MIN_INDEX ? MIN_INDEX : i);
     },
     /**
      * Primitive to get the active cell row from the model.
      *
-     * @return {number} The active cell row, 1-based.
+     * @return {number} The active cell row, 0-based.
      * @public
      */
     getCellRow: function() {
@@ -255,7 +255,7 @@
     /**
      * Primitive to get the active cell column from the model.
      *
-     * @return {number} The active cell column, 1-based.
+     * @return {number} The active cell column, 0-based.
      * @public
      */
     getCellCol: function() {
@@ -282,7 +282,7 @@
       let row = this.getCellRow();
       let col = this.getCellCol();
 
-      return table.rows[ row - 1 ].cells[ col - 1 ];
+      return table.rows[ row ].cells[ col ];
     },
     /**
      * Primitive to change the cell row without updating the user interface.
@@ -311,7 +311,7 @@
     setCellCol: function( col ) {
       let table = this.getTableBodyElement();
       let row = this.getCellRow();
-      let max = table.rows[ row - 1 ].cells.length;
+      let max = table.rows[ row ].cells.length;
 
       this._cell[1] = this.sanitizeCellIndex( col, max );
     },
@@ -467,7 +467,7 @@
      * @public
      */
     cellCut: function() {
-			this.cellCopy();
+      this.cellCopy();
       this.cellErase();
     },
     /**
@@ -475,7 +475,7 @@
      * @public
      */
     cellCopy: function() {
-			this.clipboardCopy( this.getTableCell() );
+      this.clipboardCopy( this.getTableCell() );
     },
     /**
      * Erases the active cell's contents.
@@ -581,7 +581,7 @@
      */
     cellEditCancel: function() {
       console.log( 'Edit cancel' );
-			this.cellEditStop();
+      this.cellEditStop();
     },
     /**
      * @public
@@ -629,13 +629,13 @@
      * @param {object} element The element contents to copy.
      * @protected
      */
-		clipboardCopy: function( element ) {
-			var $temp = $('<input>');
-			$('body').append( $temp );
-			$temp.val( $(element).text() ).select();
-			document.execCommand( 'copy' );
-			$temp.remove();
-		},
+    clipboardCopy: function( element ) {
+      var $temp = $('<input>');
+      $('body').append( $temp );
+      $temp.val( $(element).text() ).select();
+      document.execCommand( 'copy' );
+      $temp.remove();
+    },
     /**
      * Called when the paste command is invoked to replace the contents of the
      * active cell with the system's copy buffer.
