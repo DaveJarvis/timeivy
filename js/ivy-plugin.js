@@ -76,9 +76,11 @@
       { k: 'ctrl+end',     f: 'navigateEnd' },
       { k: 'shift+tab',    f: 'navigateLeft' },
       { k: 'tab',          f: 'navigateRight' },
+
       { k: 'ctrl+s',       f: 'timesheetSave' },
       { k: 'ctrl+z',       f: 'timesheetUndo' },
       { k: 'ctrl+shift+z', f: 'timesheetRedo' },
+
       { k: 'ctrl+x',       f: 'cellCut' },
       { k: 'ctrl+c',       f: 'cellCopy' },
       { k: 'ctrl+ins',     f: 'cellCopy' },
@@ -86,6 +88,7 @@
       { k: 'f2',           f: 'cellEditStart' },
       { k: 'enter',        f: 'cellEditStart' },
       { k: 'esc',          f: 'cellEditCancel' },
+
       { k: 'ins',          f: 'timesheetInsertRowAfter' },
       { k: 'alt+ins',      f: 'timesheetInsertRowBefore' },
     ],
@@ -291,16 +294,14 @@
      * the cell model.
      */
     activate: function() {
-      let tableCell = this.getTableCell();
-      $(tableCell).addClass( this.settings.classActiveCell );
+      $(this.getTableCell()).addClass( this.settings.classActiveCell );
     },
     /**
      * Primitive to remove the active class from the table cell represented by
      * the cell model.
      */
     deactivate: function() {
-      let tableCell = this.getTableCell();
-      $(tableCell).removeClass( this.settings.classActiveCell );
+      $(this.getTableCell()).removeClass( this.settings.classActiveCell );
     },
     /**
      * Changes the active cell. This deactivates the cell from the model, uses
@@ -308,6 +309,7 @@
      * the cell from the model.
      */
     navigate: function( row, col ) {
+      this.cellEditStop();
       this.deactivate();
       this.setCellRow( row );
       this.setCellCol( col );
@@ -320,7 +322,6 @@
      * @param skip The number of cells to move.
      */
     navigateRow: function( skip ) {
-      this.cellEditStop();
       this.navigate( this.getCellRow() + skip, this.getCellCol() );
     },
     navigatePageUp: function() {
@@ -451,8 +452,9 @@
         let $tableCell = $(this.getTableCell());
         $tableCell.removeClass( this.settings.classActiveCellInput );
         $tableCell.text( cellValue );
-        $tableCell.focus();
       }
+
+      $(this.getTableBodyElement()).focus();
     },
     cellEditCancel: function() {
       console.log( 'Edit cancel' );
@@ -480,14 +482,12 @@
 			$temp.val( $(element).text() ).select();
 			document.execCommand( 'copy' );
 			$temp.remove();
-      console.log( 'copy' );
 		},
-    clipboardPaste: function( content ) {
+    clipboardPaste: function( e ) {
       let buffer = e.originalEvent.clipboardData.getData('text');
       let $tableCell = $(this.getTableCell());
 
       $tableCell.text( buffer );
-      console.log( 'paste' );
     }
   } );
 

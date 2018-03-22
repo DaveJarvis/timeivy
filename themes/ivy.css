@@ -76,8 +76,12 @@ table.ivy td.active {
   border: 1px solid black;
 }
 
+/**
+ * Glowing pale cerulean blue shadow during editing.
+ */
 table.ivy td.edit {
-  border: 1px solid red;
+  box-shadow: 0 0 4px rgb( 152, 180, 212 );
+  border: 1px solid rgb( 152, 180, 212 );
 }
 
 /**
