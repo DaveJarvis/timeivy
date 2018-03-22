@@ -188,7 +188,7 @@
         var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
 
         if( e.type === 'keypress' && charCode && !e.ctrlKey ) {
-          console.log( 'KEYPRESS WTF!' );
+          console.log( 'KEYPRESS!' );
           //plugin.cellEditStart();
         }
       } );
@@ -583,7 +583,8 @@
         $tableCell.text( cellValue );
       }
 
-      $(this.getTableBodyElement()).focus();
+      let $table = $(plugin.getTableBodyElement());
+      $table.focus();
     },
     /**
      * Disables cell editing for the active table cell and reverts to its
