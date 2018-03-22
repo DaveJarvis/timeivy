@@ -33,7 +33,7 @@ String.prototype.toTime = function() {
     time = time.replace( /^00/, '24' );
 
     // Strip the string down to digits and convert to a number.
-    time = parseInt( time.replace( /\D/g, '' ) );
+    time = parseInt( time.replace( /\D/g, '' ), 10 );
   }
   else {
     time = 0;

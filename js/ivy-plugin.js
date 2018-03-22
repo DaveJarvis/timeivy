@@ -51,6 +51,11 @@
 ;(function( $, window, document, undefined ) {
   'use strict';
 
+  /** @const */
+  const MIN_INDEX = 1;
+  /** @const */
+  const MAX_INDEX = 1000;
+
   var pluginName = 'ivy';
   var pluginKey = 'plugin_' + pluginName;
   var defaults = {
@@ -77,30 +82,33 @@
       { k: 'shift+tab',    f: 'navigateLeft' },
       { k: 'tab',          f: 'navigateRight' },
 
-      { k: 'ctrl+s',       f: 'timesheetSave' },
-      { k: 'ctrl+z',       f: 'timesheetUndo' },
-      { k: 'ctrl+shift+z', f: 'timesheetRedo' },
-
       { k: 'ctrl+x',       f: 'cellCut' },
       { k: 'ctrl+c',       f: 'cellCopy' },
       { k: 'ctrl+ins',     f: 'cellCopy' },
       { k: 'del',          f: 'cellErase' },
+
       { k: 'f2',           f: 'cellEditStart' },
       { k: 'enter',        f: 'cellEditStart' },
       { k: 'esc',          f: 'cellEditCancel' },
 
-      { k: 'ins',          f: 'timesheetInsertRowAfter' },
-      { k: 'alt+ins',      f: 'timesheetInsertRowBefore' },
+      { k: 'ins',          f: 'editInsertRowAfter' },
+      { k: 'alt+ins',      f: 'editInsertRowBefore' },
+
+      { k: 'ctrl+s',       f: 'editSave' },
+      { k: 'ctrl+z',       f: 'editUndo' },
+      { k: 'ctrl+shift+z', f: 'editRedo' },
     ],
     modeEdit: [
-      { k: 'up',           f: 'editUp' },
-      { k: 'down',         f: 'editDown' },
+      { k: 'up',           f: 'navigateUp' },
+      { k: 'down',         f: 'navigateDown' },
     ]
   };
 
-  // This represents the data model for tracking the active cell.
-  //var cell = [1, 1];
-
+  /**
+   * The Ivy plug-in constructor.
+   *
+   * @constructor
+   */
   function Plugin( element, options ) {
     this.element = element;
 
@@ -116,6 +124,8 @@
   $.extend( Plugin.prototype, {
     /**
      * Called during plugin construction to initialize the timesheet.
+     *
+     * @protected
      */
     init: function() {
       // Start in navigation mode.
@@ -137,11 +147,10 @@
      * Jumps to a given table cell. This is used upon receiving a click or
      * double-click event.
      *
-     * @param $cell The cell to activate.
+     * @param {object} $cell The cell to activate.
+     * @public
      */
     navigateTableCell: function( $cell ) {
-      this.cellEditStop();
-
       let col = $cell.parent().children().index($cell);
       let row = $cell.parent().parent().children().index($cell.parent());
 
@@ -149,6 +158,8 @@
     },
     /**
      * Binds single mouse clicks to navigation.
+     *
+     * @protected
      */
     bindNavigationClicks: function() {
       let plugin = this;
@@ -165,6 +176,8 @@
     },
     /**
      * Start cell editing when a printable character is typed.
+     *
+     * @protected
      */
     bindPrintableKeys: function() {
       let plugin = this;
@@ -184,6 +197,8 @@
     },
     /**
      * Binds the keyboard to cell model navigation.
+     *
+     * @protected
      */
     bindNavigateMode: function() {
       Mousetrap.reset();
@@ -203,13 +218,14 @@
     },
     /**
      * Binds paste events to replace cell content.
+     *
+     * @protected
      */
     bindPasteHandler: function() {
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
 
-      console.log( 'paste handler: ' + $table );
-
+      // This requires that the table body element retains focus.
       $table.on( 'paste', function( e ) {
         plugin.clipboardPaste( e );
       } );
@@ -219,8 +235,10 @@
      * 1 if index is less than 1, or max if index is greater than max,
      * otherwise this returns the index.
      *
-     * @param index The row or column index to sanitize.
-     * @param max The maximum extent allowed for the index value.
+     * @param {number} index The row or column index to sanitize.
+     * @param {number} max The maximum extent allowed for the index value.
+     *
+     * @private
      */
     sanitizeCellIndex: function( index, max ) {
       return index = index > max ? max : (index < 1 ? 1 : index);
@@ -228,7 +246,8 @@
     /**
      * Primitive to get the active cell row from the model.
      *
-     * @return The active cell row, 1-based.
+     * @return {number} The active cell row, 1-based.
+     * @public
      */
     getCellRow: function() {
       return this._cell[0];
@@ -236,7 +255,8 @@
     /**
      * Primitive to get the active cell column from the model.
      *
-     * @return The active cell column, 1-based.
+     * @return {number} The active cell column, 1-based.
+     * @public
      */
     getCellCol: function() {
       return this._cell[1];
@@ -244,7 +264,8 @@
     /**
      * Primitive to get the table body via jQuery.
      *
-     * @return An element that represents the tbody containing cells.
+     * @return {object} An element that represents the tbody containing cells.
+     * @public
      */
     getTableBodyElement: function() {
       return $(this.element)[0];
@@ -253,7 +274,8 @@
      * Primitive to get the active table cell element, which can be referenced
      * using jQuery as $(this.getTableCell()).
      *
-     * @return This returns a td element that can be styled.
+     * @return {object} This returns a td element that can be styled.
+     * @public
      */
     getTableCell: function() {
       let table = this.getTableBodyElement();
@@ -267,7 +289,9 @@
      * Any value that exceeds the table range is set to the extent of the
      * table range.
      *
+     * @param {number} row The new value for the active cell row.
      * @postcondition The cell data model row is set to the given row.
+     * @protected
      */
     setCellRow: function( row ) {
       let table = this.getTableBodyElement();
@@ -280,7 +304,9 @@
      * Any value that exceeds the table range is set to the extent of the
      * table range.
      *
+     * @param {number} col The new value for the active cell column.
      * @postcondition The cell data model column is set to the given column.
+     * @protected
      */
     setCellCol: function( col ) {
       let table = this.getTableBodyElement();
@@ -292,6 +318,9 @@
     /**
      * Primitive to add the active class to the table cell represented by
      * the cell model.
+     *
+     * @postcondition The active cell has its active cell class added.
+     * @protected
      */
     activate: function() {
       $(this.getTableCell()).addClass( this.settings.classActiveCell );
@@ -299,14 +328,25 @@
     /**
      * Primitive to remove the active class from the table cell represented by
      * the cell model.
+     *
+     * @postcondition The active cell has its active cell class removed.
+     * @protected
      */
     deactivate: function() {
       $(this.getTableCell()).removeClass( this.settings.classActiveCell );
     },
     /**
-     * Changes the active cell. This deactivates the cell from the model, uses
-     * the primtives to adjust the model's row and column, then activates
-     * the cell from the model.
+     * Changes the active cell. All other navigate functions call this
+     * function to stop cell editing and navigate to another cell.
+     *
+     * @param {number} row The new row number for the active cell.
+     * @param {number} col The new column number for the active cell.
+     *
+     * @postcondition Cell editing has stopped.
+     * @postcondition The previously activate cell is deactivated.
+     * @postcondition The cell at (row, col) is activated.
+     *
+     * @public
      */
     navigate: function( row, col ) {
       this.cellEditStop();
@@ -319,61 +359,112 @@
      * Helper method for navigating to a different row within the active
      * column. This first stops edit mode before navigating away.
      *
-     * @param skip The number of cells to move.
+     * @param {number} skip The number of cells to move.
+     *
+     * @public
      */
     navigateRow: function( skip ) {
       this.navigate( this.getCellRow() + skip, this.getCellCol() );
     },
+    /**
+     * @public
+     */
     navigatePageUp: function() {
       this.navigateRow( -this.settings.pageSize );
     },
+    /**
+     * @public
+     */
     navigatePageDown: function() {
       this.navigateRow( +this.settings.pageSize );
     },
+    /**
+     * @public
+     */
     navigateUpSkip: function() {
       console.log( 'Navigate up skip' );
     },
+    /**
+     * @public
+     */
     navigateDownSkip: function() {
       console.log( 'Navigate down skip' );
     },
+    /**
+     * @public
+     */
     navigateUp: function() {
       this.navigateRow( -1 );
     },
+    /**
+     * @public
+     */
     navigateDown: function() {
       this.navigateRow( +1 );
     },
+    /**
+     * @public
+     */
     navigateLeft: function() {
       this.navigate( this.getCellRow(), this.getCellCol() - 1 );
     },
+    /**
+     * @public
+     */
     navigateLeftSkip: function() {
       this.navigate( this.getCellRow(), this.getCellCol() - 1 );
     },
+    /**
+     * @public
+     */
     navigateRight: function() {
       this.navigate( this.getCellRow(), this.getCellCol() + 1 );
     },
+    /**
+     * @public
+     */
     navigateRightSkip: function() {
       this.navigate( this.getCellRow(), this.getCellCol() + 1 );
     },
+    /**
+     * @public
+     */
     navigateHome: function() {
-      this.navigate( Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER );
+      this.navigate( MIN_INDEX, MIN_INDEX );
     },
+    /**
+     * @public
+     */
     navigateEnd: function() {
-      this.navigate( Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER );
+      this.navigate( MAX_INDEX, MAX_INDEX );
     },
+    /**
+     * @public
+     */
     navigateRowHome: function() {
-      this.navigate( this.getCellRow(), Number.MIN_SAFE_INTEGER );
+      this.navigate( this.getCellRow(), MIN_INDEX );
     },
+    /**
+     * @public
+     */
     navigateRowEnd: function() {
-      this.navigate( this.getCellRow(), Number.MAX_SAFE_INTEGER );
+      this.navigate( this.getCellRow(), MAX_INDEX );
     },
+    /**
+     * @public
+     */
     navigateSheetFore: function() {
       console.log( 'Navigate forward' );
     },
+    /**
+     * @public
+     */
     navigateSheetAnte: function() {
       console.log( 'Navigate backward' );
     },
     /**
      * Copies the active cell's contents and then erases the contents.
+     * @public
      */
     cellCut: function() {
 			this.cellCopy();
@@ -381,12 +472,14 @@
     },
     /**
      * Copies the active cell's contents into the clipboard buffer.
+     * @public
      */
     cellCopy: function() {
 			this.clipboardCopy( this.getTableCell() );
     },
     /**
      * Erases the active cell's contents.
+     * @public
      */
     cellErase: function() {
       $(this.getTableCell()).text( '' );
@@ -394,8 +487,9 @@
     /**
      * Creates an input field at the active table cell.
      *
-     * @param $tableCell - Contains the cell width and text value used to
-     * create and populate the cell input field.
+     * @param {object} $tableCell Contains the cell width and text value used
+     * to create and populate the cell input field.
+     * @protected
      */
     cellInputCreate: function( $tableCell ) {
       $tableCell.addClass( this.settings.classActiveCellInput );
@@ -420,6 +514,7 @@
      * Destroys the previously created input field.
      *
      * @return The input field value.
+     * @protected
      */
     cellInputDestroy: function() {
       let $input = this.getCellInput();
@@ -430,15 +525,26 @@
 
       return cellValue;
     },
+    /**
+     * @protected
+     */
     getCellInput: function() {
       return this._$cellInput;
     },
     /**
-     * @param $input The new value for the cell input field widget.
+     * Sets the input field used for editing by the user.
+     *
+     * @param {object} $input The new value for the cell input field widget.
+     * @protected
      */
     setCellInput: function( $input ) {
       this._$cellInput = $input;
     },
+    /**
+     * Enables cell editing for the active table cell.
+     *
+     * @public
+     */
     cellEditStart: function() {
       let $tableCell = $(this.getTableCell());
       let $input = this.cellInputCreate( $tableCell );
@@ -451,6 +557,11 @@
       $tableCell.html( $input );
       $input.focus();
     },
+    /**
+     * Disables cell editing for the active table cell.
+     *
+     * @public
+     */
     cellEditStop: function() {
       if( this.getCellInput() !== false ) {
         let cellValue = this.cellInputDestroy();
@@ -462,26 +573,62 @@
 
       $(this.getTableBodyElement()).focus();
     },
+    /**
+     * Disables cell editing for the active table cell and reverts to its
+     * previous value.
+     *
+     * @protected
+     */
     cellEditCancel: function() {
       console.log( 'Edit cancel' );
 			this.cellEditStop();
     },
-    timesheetSave: function() {
+    /**
+     * @public
+     */
+    editSave: function() {
       console.log( 'Save timesheet' );
       this.cellEditStop();
     },
-    timesheetInsertRowBefore: function() {
+    /**
+     * Inserts a new row before the active cell row.
+     *
+     * @public
+     */
+    editInsertRowBefore: function() {
       console.log( 'Insert row before' );
     },
-    timesheetInsertRowAfter: function() {
+    /**
+     * Inserts a new row after the active cell row.
+     *
+     * @public
+     */
+    editInsertRowAfter: function() {
       console.log( 'Insert row after' );
     },
-    timesheetUndo: function() {
+    /**
+     * Un-executes the previously executed command.
+     *
+     * @public
+     */
+    editUndo: function() {
       console.log( 'Timesheet undo' );
     },
-    timesheetRedo: function() {
+    /**
+     * Re-executes the previously un-executed command.
+     *
+     * @public
+     */
+    editRedo: function() {
       console.log( 'Timesheet redo' );
     },
+    /**
+     * Called when the copy command is invoked to copy the contents of the
+     * active cell into the system's copy buffer.
+     *
+     * @param {object} element The element contents to copy.
+     * @protected
+     */
 		clipboardCopy: function( element ) {
 			var $temp = $('<input>');
 			$('body').append( $temp );
@@ -489,6 +636,13 @@
 			document.execCommand( 'copy' );
 			$temp.remove();
 		},
+    /**
+     * Called when the paste command is invoked to replace the contents of the
+     * active cell with the system's copy buffer.
+     *
+     * @param {object} e The paste event.
+     * @protected
+     */
     clipboardPaste: function( e ) {
       let buffer = e.originalEvent.clipboardData.getData('text');
       let $tableCell = $(this.getTableCell());
