@@ -20,6 +20,13 @@ table.ivy {
 }
 
 /**
+ * Suppress dashed border around focused table.
+ */ 
+table.ivy tbody {
+	outline: none;
+}
+
+/**
  * Spreadsheets, traditionally, don't have bold headings.
  */
 table.ivy th {
@@ -28,7 +35,7 @@ table.ivy th {
 }
 
 /**
- * Give some space around and within cells.
+ * Give some space around and within all cells.
  */
 table.ivy th, table.ivy td {
   margin: 4px;
@@ -64,7 +71,31 @@ table.ivy .readonly {
  * row and individual cell, setting the border for the active cell here
  * ensures that all of its edges appear properly.
  */
-.active {
+table.ivy td.active {
   background-color: rgba( 0, 0, 0, 0.1 );
-  border: 1px solid black !important;
+  border: 1px solid black;
 }
+
+table.ivy td.edit {
+  border: 1px solid red;
+}
+
+/**
+ * Make the input field fully transparent and completely borderless.
+ */
+table.ivy td.active input {
+  background-color: rgba( 0, 0, 0, 0 );
+  border-width: 0px;
+	border: none;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+	font-weight: normal;
+	outline: 0;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	-webkit-appearance: none;
+	overflow: hidden;
+}
+

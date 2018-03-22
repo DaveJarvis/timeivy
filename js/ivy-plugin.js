@@ -5,9 +5,10 @@
  * Edit Mode Key Bindings
  * ========================================================
  * Ctrl+a      - [select all text]
- * Ctrl+c      - [copy selected text]
- * Ctrl+Insert - [copy selected text]
- * Ctrl+v      - [paste copied text]
+ * Ctrl+c      - [copy cell text]
+ * Ctrl+Insert - [copy cell text]
+ * Ctrl+x      - [cut cell text]
+ * Ctrl+v      - [replace cell text]
  * Ctrl+z      - [undo edit]
  * Up Arrow    - [navigate mode] [save] [bubble keypress]
  * Down Arrow  - [navigate mode] [save] [bubble keypress]
@@ -53,7 +54,8 @@
   var pluginName = 'ivy';
   var pluginKey = 'plugin_' + pluginName;
   var defaults = {
-    activeCellClassName: 'active',
+    classActiveCell:      'active',
+    classActiveCellInput: 'edit',
     pageSize: 30,
     modeNavigate: [
       { k: 'left',         f: 'navigateLeft' },
@@ -66,6 +68,8 @@
       { k: 'ctrl+down',    f: 'navigateDownSkip' },
       { k: 'pageup',       f: 'navigatePageUp' },
       { k: 'pagedown',     f: 'navigatePageDown' },
+      { k: 'ctrl+pageup',  f: 'navigateSheetFore' },
+      { k: 'ctrl+pagedown',f: 'navigateSheetAnte' },
       { k: 'home',         f: 'navigateRowHome' },
       { k: 'end',          f: 'navigateRowEnd' },
       { k: 'ctrl+home',    f: 'navigateHome' },
@@ -75,22 +79,24 @@
       { k: 'ctrl+s',       f: 'timesheetSave' },
       { k: 'ctrl+z',       f: 'timesheetUndo' },
       { k: 'ctrl+shift+z', f: 'timesheetRedo' },
+      { k: 'ctrl+x',       f: 'cellCut' },
+      { k: 'ctrl+c',       f: 'cellCopy' },
+      { k: 'ctrl+ins',     f: 'cellCopy' },
+      { k: 'del',          f: 'cellErase' },
       { k: 'f2',           f: 'cellEditStart' },
       { k: 'enter',        f: 'cellEditStart' },
-      { k: 'space',        f: 'cellEditStartBlank' },
-      { k: 'del',          f: 'cellEditDelete' },
+      { k: 'esc',          f: 'cellEditCancel' },
       { k: 'ins',          f: 'timesheetInsertRowAfter' },
-      { k: 'ctrl+ins',     f: 'timesheetInsertRowBefore' },
+      { k: 'alt+ins',      f: 'timesheetInsertRowBefore' },
     ],
     modeEdit: [
-      { k: 'esc',          f: 'editEscape' },
       { k: 'up',           f: 'editUp' },
       { k: 'down',         f: 'editDown' },
     ]
   };
 
   // This represents the data model for tracking the active cell.
-  var cell = [1, 1];
+  //var cell = [1, 1];
 
   function Plugin( element, options ) {
     this.element = element;
@@ -98,7 +104,9 @@
     this.settings = $.extend( {}, defaults, options );
     this._defaults = defaults;
     this._name = pluginName;
-    this._cell = cell;
+    this._cell = [1, 1];
+    this._$cellInput = false;
+    this._navigationMode = true;
     this.init();
   }
 
@@ -110,53 +118,66 @@
       // Start in navigation mode.
       this.bindNavigateMode();
 
-      // Make sure that alpha numerics, punctuation, etc. start edit mode.
-      this.bindEditKeys();
+      // Start edit mode when any non-navigable key is pressed.
+      this.bindPrintableKeys();
 
       // Allow click (mouse, tap, etc.) navigation.
-      this.bindNavigationClick();
+      this.bindNavigationClicks();
+
+      // Handle paste events.
+      this.bindPasteHandler();
 
       // Highlight the default cell location.
       this.activate();
     },
     /**
+     * Jumps to a given table cell. This is used upon receiving a click or
+     * double-click event.
+     *
+     * @param $cell The cell to activate.
+     */
+    navigateTableCell: function( $cell ) {
+      this.cellEditStop();
+
+      let col = $cell.parent().children().index($cell);
+      let row = $cell.parent().parent().children().index($cell.parent());
+
+      this.navigate( row + 1, col + 1 );
+    },
+    /**
      * Binds single mouse clicks to navigation.
      */
-    bindNavigationClick: function() {
-      this.cellEditStop();
-      this.modeNavigate();
-
+    bindNavigationClicks: function() {
       let plugin = this;
-      let table = plugin.getTableBodyElement();
+      let $table = $(plugin.getTableBodyElement());
 
-      $(table).on( 'click', 'td', function() {
-        let col = $(this).parent().children().index($(this));
-        let row = $(this).parent().parent().children().index($(this).parent());
-        plugin.navigate( row + 1, col + 1 );
+      $table.on( 'click', 'td', function() {
+        plugin.navigateTableCell( $(this) );
+      } );
+
+      $table.on( 'dblclick', 'td', function() {
+        plugin.navigateTableCell( $(this) );
+        plugin.cellEditStart();
       } );
     },
     /**
-     * In navigation mode, a printable character keypress triggers editing.
+     * Start cell editing when a printable character is typed.
      */
-    bindEditKeys: function() {
+    bindPrintableKeys: function() {
       let plugin = this;
+      let $table = $(plugin.getTableBodyElement());
 
-      (function(Mousetrap) {
-        Mousetrap.prototype.handleKey = function( character, modifiers, e ) {
-          // If the character code is numeric, it is a non-printable char.
-          var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
+      $table.keypress( function( e ) {
+        // If the character code is numeric, it is a non-printable char.
+        var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
 
-          // Start cell editing when a printable character is typed.
-          if( e.type === 'keypress' && charCode && !e.ctrlKey ) {
-            e.stopImmediatePropagation();
-            plugin.cellEditStart();
-          }
+        if( e.type === 'keypress' && charCode && !e.ctrlKey ) {
+          console.log( 'KEYPRESS WTF!' );
+          //plugin.cellEditStart();
+        }
+      } );
 
-          return this._handleKey( character, modifiers, e );
-        };
-
-        Mousetrap.init();
-      }) (Mousetrap);
+      $table.focus();
     },
     /**
      * Binds the keyboard to cell model navigation.
@@ -176,6 +197,30 @@
           eval( 'plugin.' + f ).call( plugin );
         });
       }
+    },
+    /**
+     * Binds paste events to replace cell content.
+     */
+    bindPasteHandler: function() {
+      let plugin = this;
+      let $table = $(plugin.getTableBodyElement());
+
+      console.log( 'paste handler: ' + $table );
+
+      $table.on( 'paste', function( e ) {
+        plugin.clipboardPaste( e );
+      } );
+    },
+    /**
+     * Primitive to sanitize the row and column values. This will return
+     * 1 if index is less than 1, or max if index is greater than max,
+     * otherwise this returns the index.
+     *
+     * @param index The row or column index to sanitize.
+     * @param max The maximum extent allowed for the index value.
+     */
+    sanitizeCellIndex: function( index, max ) {
+      return index = index > max ? max : (index < 1 ? 1 : index);
     },
     /**
      * Primitive to get the active cell row from the model.
@@ -225,9 +270,7 @@
       let table = this.getTableBodyElement();
       let max = table.rows.length;
 
-      row = row > max ?  max : (row < 1 ? 1 : row);
-
-      this._cell[0] = row;
+      this._cell[0] = this.sanitizeCellIndex( row, max );
     },
     /**
      * Primitive to change the cell column without updating the user interface.
@@ -241,9 +284,7 @@
       let row = this.getCellRow();
       let max = table.rows[ row - 1 ].cells.length;
 
-      col = col > max ? max : (col < 1 ? 1 : col);
-
-      this._cell[1] = col;
+      this._cell[1] = this.sanitizeCellIndex( col, max );
     },
     /**
      * Primitive to add the active class to the table cell represented by
@@ -251,7 +292,7 @@
      */
     activate: function() {
       let tableCell = this.getTableCell();
-      $(tableCell).addClass( this.settings.activeCellClassName );
+      $(tableCell).addClass( this.settings.classActiveCell );
     },
     /**
      * Primitive to remove the active class from the table cell represented by
@@ -259,7 +300,7 @@
      */
     deactivate: function() {
       let tableCell = this.getTableCell();
-      $(tableCell).removeClass( this.settings.activeCellClassName );
+      $(tableCell).removeClass( this.settings.classActiveCell );
     },
     /**
      * Changes the active cell. This deactivates the cell from the model, uses
@@ -272,13 +313,27 @@
       this.setCellCol( col );
       this.activate();
     },
-    navigateUp: function() {
+    /**
+     * Helper method for navigating to a different row within the active
+     * column. This first stops edit mode before navigating away.
+     *
+     * @param skip The number of cells to move.
+     */
+    navigateRow: function( skip ) {
       this.cellEditStop();
-      this.navigate( this.getCellRow() - 1, this.getCellCol() );
+      this.navigate( this.getCellRow() + skip, this.getCellCol() );
+    },
+    navigatePageUp: function() {
+      this.navigateRow( -this.settings.pageSize );
+    },
+    navigatePageDown: function() {
+      this.navigateRow( +this.settings.pageSize );
+    },
+    navigateUp: function() {
+      this.navigateRow( -1 );
     },
     navigateDown: function() {
-      this.cellEditStop();
-      this.navigate( this.getCellRow() + 1, this.getCellCol() );
+      this.navigateRow( +1 );
     },
     navigateLeft: function() {
       this.navigate( this.getCellRow(), this.getCellCol() - 1 );
@@ -304,55 +359,135 @@
     navigateRowEnd: function() {
       this.navigate( this.getCellRow(), Number.MAX_SAFE_INTEGER );
     },
-    navigatePageUp: function() {
-      this.navigate(
-        this.getCellRow() - this.settings.pageSize, this.getCellCol()
-      );
+    navigateSheetFore: function() {
+      console.log( 'Navigate forward' );
     },
-    navigatePageDown: function() {
-      this.navigate(
-        this.getCellRow() + this.settings.pageSize, this.getCellCol()
-      );
+    navigateSheetAnte: function() {
+      console.log( 'Navigate backward' );
     },
-    modeNavigate: function() {
-      console.log( "Mode navigate" );
+    /**
+     * Copies the active cell's contents and then erases the contents.
+     */
+    cellCut: function() {
+			this.cellCopy();
+      this.cellErase();
     },
-    cellEditStartBlank: function() {
-      // Clear out the cell and then begin editing.
-      this.cellEditStart();
+    /**
+     * Copies the active cell's contents into the clipboard buffer.
+     */
+    cellCopy: function() {
+			this.clipboardCopy( this.getTableCell() );
+    },
+    /**
+     * Erases the active cell's contents.
+     */
+    cellErase: function() {
+      $(this.getTableCell()).text( '' );
+    },
+    /**
+     * Creates an input field at the active table cell.
+     *
+     * @param $tableCell - Contains the cell width and text value used to
+     * create and populate the cell input field.
+     */
+    cellInputCreate: function( $tableCell ) {
+      $tableCell.addClass( this.settings.classActiveCellInput );
+
+      let cellWidth = $tableCell.width();
+      let cellValue = $tableCell.text();
+      let $input = $('<input>');
+
+      $input.prop({
+        type: 'text',
+        value: cellValue,
+      });
+
+      $input.css({
+        'width': cellWidth,
+        'max-width': cellWidth,
+      });
+
+      return $input;
+    },
+    /**
+     * Destroys the previously created input field.
+     *
+     * @return The input field value.
+     */
+    cellInputDestroy: function() {
+      let $input = this.getCellInput();
+      let cellValue = $input.val();
+
+      $input.remove();
+      this.setCellInput( false );
+
+      return cellValue;
+    },
+    getCellInput: function() {
+      return this._$cellInput;
+    },
+    /**
+     * @param $input The new value for the cell input field widget.
+     */
+    setCellInput: function( $input ) {
+      this._$cellInput = $input;
     },
     cellEditStart: function() {
-      console.log( "Start edit cell" );
-      let tableCell = this.getTableCell();
-      console.log( $(tableCell).width() );
+      let $tableCell = $(this.getTableCell());
+      let $input = this.cellInputCreate( $tableCell );
+      this.setCellInput( $input );
+
+      $input.on( 'focusout', function() {
+        $tableCell.text( $input.val() );
+      });
+
+      $tableCell.html( $input );
+      $input.focus();
     },
     cellEditStop: function() {
-      console.log( "Stop edit cell" );
-      let tableCell = this.getTableCell();
+      if( this.getCellInput() !== false ) {
+        let cellValue = this.cellInputDestroy();
+
+        let $tableCell = $(this.getTableCell());
+        $tableCell.removeClass( this.settings.classActiveCellInput );
+        $tableCell.text( cellValue );
+        $tableCell.focus();
+      }
     },
-    cellEditDelete: function() {
-      console.log( 'delete cell' );
-      let tableCell = this.getTableCell();
-      $(tableCell).text( '' );
+    cellEditCancel: function() {
+      console.log( 'Edit cancel' );
+			this.cellEditStop();
     },
     timesheetSave: function() {
-      console.log( "Save timesheet" );
+      console.log( 'Save timesheet' );
       this.cellEditStop();
     },
     timesheetInsertRowBefore: function() {
-      console.log( "Insert row before" );
+      console.log( 'Insert row before' );
     },
     timesheetInsertRowAfter: function() {
-      console.log( "Insert row after" );
+      console.log( 'Insert row after' );
     },
     timesheetUndo: function() {
-      console.log( "Timesheet undo" );
+      console.log( 'Timesheet undo' );
     },
     timesheetRedo: function() {
-      console.log( "Timesheet redo" );
+      console.log( 'Timesheet redo' );
     },
-    redo: function() {
-      console.log( "Redo!" );
+		clipboardCopy: function( element ) {
+			var $temp = $('<input>');
+			$('body').append( $temp );
+			$temp.val( $(element).text() ).select();
+			document.execCommand( 'copy' );
+			$temp.remove();
+      console.log( 'copy' );
+		},
+    clipboardPaste: function( content ) {
+      let buffer = e.originalEvent.clipboardData.getData('text');
+      let $tableCell = $(this.getTableCell());
+
+      $tableCell.text( buffer );
+      console.log( 'paste' );
     }
   } );
 
@@ -368,6 +503,9 @@
   window.Plugin = Plugin;
 })(jQuery, window, document);
 
+/**
+ * Prevent the tab key from moving focus to the browser's widgets.
+ */
 Mousetrap.prototype.stopCallback = function(e, element, combo) {
   e.preventDefault();
   return false;
