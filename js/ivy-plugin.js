@@ -78,14 +78,15 @@
     maxPageSize: 30,
     maxUndoLevels: 1000,
     modeNavigate: [
-      { k: 'left',         f: 'navigateLeft' },
-      { k: 'right',        f: 'navigateRight' },
+      { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
       { k: 'down',         f: 'navigateDown' },
-      { k: 'ctrl+left',    f: 'navigateLeftSkip' },
-      { k: 'ctrl+right',   f: 'navigateRightSkip' },
+      { k: 'left',         f: 'navigateLeft' },
+      { k: 'right',        f: 'navigateRight' },
       { k: 'ctrl+up',      f: 'navigateUpSkip' },
       { k: 'ctrl+down',    f: 'navigateDownSkip' },
+      { k: 'ctrl+left',    f: 'navigateLeftSkip' },
+      { k: 'ctrl+right',   f: 'navigateRightSkip' },
       { k: 'pageup',       f: 'navigatePageUp' },
       { k: 'pagedown',     f: 'navigatePageDown' },
       { k: 'ctrl+pageup',  f: 'navigateSheetFore' },
@@ -103,7 +104,6 @@
       { k: 'del',          f: 'cellErase' },
 
       { k: 'f2',           f: 'cellEditStart' },
-      { k: 'enter',        f: 'cellEditStart' },
       { k: 'esc',          f: 'cellEditCancel' },
 
       { k: 'ins',          f: 'editInsertRowAfter' },
@@ -763,7 +763,7 @@
      */
     editInsertRowAfter: function() {
       console.log( 'Insert row after' );
-			
+      
     },
     /**
      * Un-executes the previously executed command.
@@ -893,17 +893,15 @@
 
     /**
      * Answers whether the given object has the same state as this object.
+     * This compares the command states to avoid corner cases whereby the
+     * user navigates to the same cell using different key combinations.
      *
      * @return {boolean} True when the states are the same.
      */
     equals( that ) {
-      let result = false;
-
-      if( typeof that !== 'undefined' ) {
-        result = Object.equals( this, that );
-      }
-
-      return result;
+      return typeof that === 'undefined' ?
+        false :
+        Object.equals( this.getState(), that.getState() );
     }
 
     undo() { 
@@ -985,29 +983,30 @@
   window.Plugin = Plugin;
 })(jQuery, window, document);
 
+/**
+ * Returns the next item that will be popped off the stack, or 'undefined' if
+ * there are no items in the array.
+ */
 Array.prototype.peek = function() {
   return this[ this.length - 1 ];
 };
 
 /**
- * Ensures that two objects are equal.
+ * Ensures that two stacks are equal.
  */
-Object.equals = function(x, y) {
-  if (x === null || x === undefined || y === null || y === undefined) {
-    return x === y;
+Object.equals = function( x, y ) {
+  // 'undefined' shall not pass.
+  if( !(x instanceof Object) || !(y instanceof Object) ) return false;
+
+  // Compare all properties from x to y, recursively for objects.
+  for( let p in x ) {
+    if( !x.hasOwnProperty( p ) ) continue;
+    if( !y.hasOwnProperty( p ) ) return false;
+    if( x[ p ] === y[ p ] ) continue;
+
+    if( !Object.equals( x[ p ], y[ p ] ) ) return false;
   }
 
-  if (x === y || x.valueOf() === y.valueOf()) {
-    return true;
-  }
-
-  if (!(x instanceof Object)) { return false; }
-  if (!(y instanceof Object)) { return false; }
-
-  let p = Object.keys(x);
-  let q = Object.keys(y);
-
-  return q.every(function (i) { return p.indexOf(i) !== -1; }) &&
-				 p.every(function (i) { return Object.equals(x[i], y[i]); });
-}
+  return true;
+};
 
