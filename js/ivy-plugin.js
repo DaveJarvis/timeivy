@@ -107,8 +107,8 @@
       { k: 'esc',          f: 'cellEditCancel' },
 
       { k: 'ins',          f: 'editInsertRowAfter' },
-      { k: 'alt+ins',      f: 'editInsertRowBefore' },
       { k: 'ctrl+i',       f: 'editInsertRowAfter' },
+      { k: 'alt+ins',      f: 'editInsertRowBefore' },
       { k: 'ctrl+shift+i', f: 'editInsertRowBefore' },
 
       { k: 'ctrl+s',       f: 'editSave' },
@@ -763,6 +763,7 @@
      */
     editInsertRowAfter: function() {
       console.log( 'Insert row after' );
+			
     },
     /**
      * Un-executes the previously executed command.
@@ -830,7 +831,12 @@
      */
     execute( command ) {
       command.execute();
-      this.getUndoStack().push( command );
+      let stack = this.getUndoStack();
+      let previous = stack.peek(); 
+
+      if( !command.equals( previous ) ) {
+        stack.push( command );
+      }
     }
 
     /**
@@ -884,6 +890,21 @@
      * @protected
      */
     execute() { }
+
+    /**
+     * Answers whether the given object has the same state as this object.
+     *
+     * @return {boolean} True when the states are the same.
+     */
+    equals( that ) {
+      let result = false;
+
+      if( typeof that !== 'undefined' ) {
+        result = Object.equals( this, that );
+      }
+
+      return result;
+    }
 
     undo() { 
       this.getPlugin().restoreState( this.getState() );
@@ -963,4 +984,30 @@
 
   window.Plugin = Plugin;
 })(jQuery, window, document);
+
+Array.prototype.peek = function() {
+  return this[ this.length - 1 ];
+};
+
+/**
+ * Ensures that two objects are equal.
+ */
+Object.equals = function(x, y) {
+  if (x === null || x === undefined || y === null || y === undefined) {
+    return x === y;
+  }
+
+  if (x === y || x.valueOf() === y.valueOf()) {
+    return true;
+  }
+
+  if (!(x instanceof Object)) { return false; }
+  if (!(y instanceof Object)) { return false; }
+
+  let p = Object.keys(x);
+  let q = Object.keys(y);
+
+  return q.every(function (i) { return p.indexOf(i) !== -1; }) &&
+				 p.every(function (i) { return Object.equals(x[i], y[i]); });
+}
 
