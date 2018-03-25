@@ -1,55 +1,7 @@
 /**
- * The Ivy plugin maps key bindings to editing input fields in
- * table cells.
+ * Time tracking software for hourly billing.
  *
- * Edit Mode Key Bindings
- * ========================================================
- * Ctrl+a      - [select all text]
- * Ctrl+c      - [copy cell text]
- * Ctrl+Insert - [copy cell text]
- * Ctrl+x      - [cut cell text]
- * Ctrl+v      - [replace cell text]
- * Ctrl+z      - [undo edit]
- * Up Arrow    - [navigate mode] [save] [bubble keypress]
- * Down Arrow  - [navigate mode] [save] [bubble keypress]
- * ESC         - [navigate mode] [revert]
- * Tab         - [navigate mode] [save] [bubble keypress]
- * Shift+Tab   - [navigate mode] [save] [bubble keypress]
- *
- * Navigate Mode Key Bindings
- * ========================================================
- * Ctrl+i           - [insert row after]  (keyboards without insert key)
- * Ctrl+Shift+i     - [insert row before] (keyboards without insert key)
- * Insert           - [insert row after]
- * Alt+Insert       - [insert row before]
- * Delete           - [delete cell contents]
- * F2               - [edit mode]
- * Enter            - [edit mode]
- * <any char>       - [edit mode] [bubble keypress]
- * Spacebar         - [edit mode] [clear text] [bubble keypress]
- * Up Arrow         - [active cell up]
- * Down Arrow       - [active cell down]
- * Left Arrow       - [active cell left]
- * Right Arrow      - [active cell right]
- * Page Up          - [active cell page up]
- * Page Down        - [active cell page down]
- * Tab              - [active cell right]
- * Shift+tab        - [active cell left]
- * Ctrl+d           - [duplicate cell above]
- * Ctrl+s           - [save cells]
- * Ctrl+Up Arrow    - [skip all empty cells up]
- * Ctrl+Down Arrow  - [skip all empty cells down down]
- * Ctrl+Left Arrow  - [active cell left]
- * Ctrl+Right Arrow - [active cell right]
- * Home             - [active cell first column, current row]
- * End              - [active cell last non-empty column, current row]
- * Ctrl+Home        - [active cell first column, first row]
- * Ctrl+End         - [active cell last non-empty column, last non-empty row]
- * Ctrl+Page Up     - [previous worksheet]
- * Ctrl+Page Down   - [next worksheet]
- *
- * Plugin Behaviours
- * ========================================================
+ * Copyright 2018 White Magic Software, Ltd.
  */
 ;(function( $, window, document, undefined ) {
   'use strict';
@@ -106,10 +58,10 @@
       { k: 'f2',           f: 'cellEditStart' },
       { k: 'esc',          f: 'cellEditCancel' },
 
-      { k: 'ins',          f: 'editInsertRowAfter' },
-      { k: 'ctrl+i',       f: 'editInsertRowAfter' },
-      { k: 'alt+ins',      f: 'editInsertRowBefore' },
-      { k: 'ctrl+shift+i', f: 'editInsertRowBefore' },
+      { k: 'ins',          f: 'editInsertRow' },
+      { k: 'ctrl+i',       f: 'editInsertRow' },
+      { k: 'alt+ins',      f: 'editInsertRow' },
+      { k: 'ctrl+shift+i', f: 'editInsertRow' },
 
       { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
@@ -191,6 +143,7 @@
       let col = $cell.parent().children().index($cell);
       let row = $cell.parent().parent().children().index($cell.parent());
 
+      // Navigating from the active cell to itself incurs undo issues.
       if( this.isActiveCell( row, col ) === false ) {
         // Ensure that the click navigation can be undone.
         this.navigate( row, col );
@@ -400,7 +353,7 @@
      * @return {object} The plugin's state.
      * @public
      */
-    retrieveState: function() {
+    cellStateRetrieve: function() {
       let result = {
         cellRow: this.getCellRow(),
         cellCol: this.getCellCol(),
@@ -416,7 +369,7 @@
      * retrieveState.
      * @private
      */
-    restoreState: function( state ) {
+    cellStateRestore: function( state ) {
       this._navigate( state.cellRow, state.cellCol );
       $(this.getTableCell()).text( state.cellVal );
     },
@@ -433,8 +386,6 @@
      * @private
      */
     execute: function( command ) {
-      //console.log( 'execute ' + command.constructor.name );
-      //console.dir( command );
       this.getCommandExecutor().execute( command );
     },
     /**
@@ -753,17 +704,8 @@
      *
      * @public
      */
-    editInsertRowBefore: function() {
-      console.log( 'Insert row before' );
-    },
-    /**
-     * Inserts a new row after the active cell row.
-     *
-     * @public
-     */
-    editInsertRowAfter: function() {
-      console.log( 'Insert row after' );
-      
+    editInsertRow: function() {
+      this.execute( new CommandInsertRow( this ) );
     },
     /**
      * Un-executes the previously executed command.
@@ -881,7 +823,7 @@
   class Command {
     constructor( plugin ) {
       this._plugin = plugin;
-      this._state = plugin.retrieveState();
+      this.saveState();
     }
 
     /**
@@ -892,8 +834,8 @@
     execute() { }
 
     /**
-     * Answers whether the given object has the same state as this object.
-     * This compares the command states to avoid corner cases whereby the
+     * Answers whether the given command has the same state as this command.
+     * This compares the command states to avoid edge cases whereby the
      * user navigates to the same cell using different key combinations.
      *
      * @return {boolean} True when the states are the same.
@@ -904,8 +846,22 @@
         Object.equals( this.getState(), that.getState() );
     }
 
+    /**
+     * Restore's the previously saved cell state.
+     */
     undo() { 
-      this.getPlugin().restoreState( this.getState() );
+      this.getPlugin().cellStateRestore( this.getState() );
+    }
+
+    /**
+     * Stashes the plugin's state so that undo can be called upon it later.
+     */
+    saveState() {
+      this.setState( this.getPlugin().cellStateRetrieve() );
+    }
+
+    setState( state ) {
+      this._state = state;
     }
 
     getState() {
@@ -945,6 +901,10 @@
     }
   }
 
+  /**
+   * Initiates cell editing, which records the active cell state immediately
+   * prior to injecting an input field.
+   */
   class CommandCellEditStart extends Command {
     constructor( plugin, cellValue ) {
       super( plugin );
@@ -977,6 +937,37 @@
     execute() {
       let plugin = this.getPlugin();
       $(plugin.getTableCell()).text( this._cellValue );
+    }
+  }
+
+  /**
+   * Inserts the active row after cloning it.
+   */
+  class CommandInsertRow extends Command {
+    constructor( plugin ) {
+      super( plugin );
+    }
+
+    execute() {
+      let plugin = this.getPlugin();
+      plugin.deactivate();
+
+      let $row = $(plugin.getTableCell()).closest( 'tr' );
+      let $clone = $row.clone();
+
+      // Uniquely identify the row so that multiple clones of the same row
+      // will result in different states, and thereby join the undo stack.
+      this.setState( { id: performance.now(), clone: $clone } );
+      $row.after( $clone );
+
+      plugin.activate();
+    }
+
+    /**
+     * Removes the row that was previously inserted.
+     */
+    undo() { 
+      this.getState().clone.remove();
     }
   }
 
