@@ -14,9 +14,7 @@ When not editing a cell, the following keyboard bindings apply:
 Hot Key          | Action
 ---              | ------
 Ctrl+i           | Insert a copy of the current row below the active cell
-Ctrl+Shift+i     | "
 Insert           | "
-Alt+Insert       | "
 Delete           | Delete the active cell's contents
 F2               | Enter edit mode for the active cell
 Enter            | Navigate one cell down
@@ -52,7 +50,7 @@ When ending a cell, the following keyboard bindings apply:
 
 Hot Key     | Action
 ---         | ------
-ESC         | Enter navigate mode, undo any changes
+Esc         | Enter navigate mode, undo any changes
 Up Arrow    | Enter navigate mode, navigate away
 Down Arrow  | "
 Tab         | "

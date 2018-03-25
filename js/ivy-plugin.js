@@ -60,8 +60,6 @@
 
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
-      { k: 'alt+ins',      f: 'editInsertRow' },
-      { k: 'ctrl+shift+i', f: 'editInsertRow' },
 
       { k: 'ctrl+z',       f: 'editUndo' },
       { k: 'ctrl+shift+z', f: 'editRedo' },
