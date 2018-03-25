@@ -448,6 +448,11 @@
       this.setCellRow( row );
       this.setCellCol( col );
       this.activate();
+
+      // Ensure that the document body retains focus. This has the side
+      // effect that when the table is loaded, the user can start typing
+      // immediately.
+      $(this.getTableBodyElement()).focus();
     },
     /**
      * Changes the active cell. All other navigate functions call this
