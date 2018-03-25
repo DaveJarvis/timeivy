@@ -18,7 +18,10 @@
  *
  * Navigate Mode Key Bindings
  * ========================================================
+ * Ctrl+i           - [insert row after]  (keyboards without insert key)
+ * Ctrl+Shift+i     - [insert row before] (keyboards without insert key)
  * Insert           - [insert row after]
+ * Alt+Insert       - [insert row before]
  * Delete           - [delete cell contents]
  * F2               - [edit mode]
  * Enter            - [edit mode]
@@ -33,7 +36,7 @@
  * Tab              - [active cell right]
  * Shift+tab        - [active cell left]
  * Ctrl+d           - [duplicate cell above]
- * Ctrl+s           - [save timesheet]
+ * Ctrl+s           - [save cells]
  * Ctrl+Up Arrow    - [skip all empty cells up]
  * Ctrl+Down Arrow  - [skip all empty cells down down]
  * Ctrl+Left Arrow  - [active cell left]
@@ -52,16 +55,28 @@
   'use strict';
 
   /** @const */
-  const MIN_INDEX = 0;
+  const PLUGIN_NAME = 'ivy';
   /** @const */
+  const PLUGIN_KEY = 'plugin_' + PLUGIN_NAME;
+
+  /**
+   * Cells cannot be indexed to values less than MIN_INDEX.
+   *
+   * @const
+   */
+  const MIN_INDEX = 0;
+  /**
+   * Cells cannot be indexed to values greater than MAX_INDEX.
+   *
+   * @const
+   */
   const MAX_INDEX = 1000;
 
-  var pluginName = 'ivy';
-  var pluginKey = 'plugin_' + pluginName;
   var defaults = {
     classActiveCell:      'active',
     classActiveCellInput: 'edit',
-    pageSize: 30,
+    maxPageSize: 30,
+    maxUndoLevels: 1000,
     modeNavigate: [
       { k: 'left',         f: 'navigateLeft' },
       { k: 'right',        f: 'navigateRight' },
@@ -93,19 +108,23 @@
 
       { k: 'ins',          f: 'editInsertRowAfter' },
       { k: 'alt+ins',      f: 'editInsertRowBefore' },
+      { k: 'ctrl+i',       f: 'editInsertRowAfter' },
+      { k: 'ctrl+shift+i', f: 'editInsertRowBefore' },
 
       { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
       { k: 'ctrl+shift+z', f: 'editRedo' },
+      { k: 'ctrl+y',       f: 'editRedo' },
     ],
     modeEdit: [
       { k: 'up',           f: 'navigateUp' },
       { k: 'down',         f: 'navigateDown' },
+      { k: 'enter',        f: 'cellEditStop' },
     ]
   };
 
   /**
-   * The Ivy plug-in constructor.
+   * Applies settings, initializes keyboard bindings.
    *
    * @constructor
    */
@@ -114,20 +133,26 @@
 
     this.settings = $.extend( {}, defaults, options );
     this._defaults = defaults;
-    this._name = pluginName;
+    this._name = PLUGIN_NAME;
     this._cell = [MIN_INDEX, MIN_INDEX];
     this._$cellInput = false;
-    this._navigationMode = true;
+    this._commandExecutor = new CommandExecutor();
     this.init();
   }
 
+  /**
+   * Permit the plug-in to be extended.
+   */
   $.extend( Plugin.prototype, {
     /**
-     * Called during plugin construction to initialize the timesheet.
+     * Called during plugin construction to bind event handlers.
      *
      * @protected
      */
     init: function() {
+      // Prevent keys from bubbling to the browser container.
+      this.setup();
+
       // Start in navigation mode.
       this.bindNavigateMode();
 
@@ -144,6 +169,16 @@
       this.activate();
     },
     /**
+     * Calls the key binding library to prevent keys from bubbling to the
+     * browser itself.
+     */
+    setup: function() {
+      Mousetrap.prototype.stopCallback = function( e, element, combo ) {
+        e.preventDefault();
+        return false;
+      }
+    },
+    /**
      * Jumps to a given table cell. This is used upon receiving a click or
      * double-click event.
      *
@@ -154,7 +189,9 @@
       let col = $cell.parent().children().index($cell);
       let row = $cell.parent().parent().children().index($cell.parent());
 
-      this.navigate( row, col );
+      if( this.isActiveCell( row, col ) === false ) {
+        this.execute( new CommandNavigate( this, row, col ) );
+      }
     },
     /**
      * Binds single mouse clicks to navigation.
@@ -227,7 +264,7 @@
 
       // This requires that the table body element retains focus.
       $table.on( 'paste', function( e ) {
-        plugin.clipboardPaste( e );
+        plugin.editPaste( e );
       } );
     },
     /**
@@ -316,6 +353,15 @@
 
       this._cell[1] = this.sanitizeCellIndex( col, max );
     },
+    isActiveCell: function( row, col ) {
+      return this.isActiveCellRow( row ) && this.isActiveCellCol( col );
+    },
+    isActiveCellRow: function( row ) {
+      return row === this.getCellRow();
+    },
+    isActiveCellCol: function( col ) {
+      return col === this.getCellCol();
+    },
     /**
      * Primitive to add the active class to the table cell represented by
      * the cell model.
@@ -337,6 +383,45 @@
       $(this.getTableCell()).removeClass( this.settings.classActiveCell );
     },
     /**
+     * Returns the state of the plugin, which can be restored using the
+     * restore state function.
+     *
+     * @return {object} The plugin's state.
+     * @public
+     */
+    retrieveState: function() {
+      let result = {
+        cellRow: this.getCellRow(),
+        cellCol: this.getCellCol(),
+        cellVal: $(this.getTableCell()).text()
+      };
+
+      console.log( 'retrieve state' );
+      console.dir( result );
+
+      return result;
+    },
+    /**
+     * Reverts the state of the plugin from a previously retrieved state.
+     *
+     * @param {object} state The state object returned from a call to
+     * retrieveState.
+     */
+    restoreState: function( state ) {
+      this.navigate( state.cellRow, state.cellCol );
+      $(this.getTableCell()).text( state.cellVal );
+    },
+    getCommandExecutor: function() {
+      return this._commandExecutor;
+    },
+    /**
+     * Delegates execution of a command to the command executor, which records
+     * commands for undo and redo purposes.
+     */
+    execute: function( command ) {
+      this.getCommandExecutor().execute( command );
+    },
+    /**
      * Changes the active cell. All other navigate functions call this
      * function to stop cell editing and navigate to another cell.
      *
@@ -347,14 +432,11 @@
      * @postcondition The previously activate cell is deactivated.
      * @postcondition The cell at (row, col) is activated.
      *
-     * @public
+     * @protected
      */
     navigate: function( row, col ) {
       this.cellEditStop();
-      this.deactivate();
-      this.setCellRow( row );
-      this.setCellCol( col );
-      this.activate();
+      this.execute( new CommandNavigate( this, row, col ) );
     },
     /**
      * Helper method for navigating to a different row within the active
@@ -362,7 +444,7 @@
      *
      * @param {number} skip The number of cells to move.
      *
-     * @public
+     * @protected
      */
     navigateRow: function( skip ) {
       this.navigate( this.getCellRow() + skip, this.getCellCol() );
@@ -373,7 +455,7 @@
      *
      * @param {number} skip The number of cells to move.
      *
-     * @public
+     * @protected
      */
     navigateCol: function( skip ) {
       this.navigate( this.getCellRow(), this.getCellCol() + skip );
@@ -382,85 +464,90 @@
      * @public
      */
     navigatePageUp: function() {
-      this.navigateRow( -this.settings.pageSize );
+      this.execute( new CommandNavigatePageUp( this ) );
     },
     /**
      * @public
      */
     navigatePageDown: function() {
-      this.navigateRow( +this.settings.pageSize );
+      this.execute( new CommandNavigatePageDown( this ) );
     },
     /**
      * @public
      */
     navigateUpSkip: function() {
       console.log( 'Navigate up skip' );
+      this.execute( new CommandNavigateUp( this ) );
     },
     /**
      * @public
      */
     navigateDownSkip: function() {
       console.log( 'Navigate down skip' );
+      this.execute( new CommandNavigateDown( this ) );
     },
     /**
      * @public
      */
     navigateUp: function() {
-      this.navigateRow( -1 );
+      this.execute( new CommandNavigateUp( this ) );
     },
     /**
      * @public
      */
     navigateDown: function() {
-      this.navigateRow( +1 );
+      console.log( 'Navigate down' );
+      this.execute( new CommandNavigateDown( this ) );
     },
     /**
      * @public
      */
     navigateLeft: function() {
-      this.navigateCol( -1 );
+      this.execute( new CommandNavigateLeft( this ) );
     },
     /**
      * @public
      */
     navigateLeftSkip: function() {
-      this.navigateCol( -1 );
+      console.log( 'Navigate left skip' );
+      this.execute( new CommandNavigateLeft( this ) );
     },
     /**
      * @public
      */
     navigateRight: function() {
-      this.navigateCol( +1 );
+      this.execute( new CommandNavigateRight( this ) );
     },
     /**
      * @public
      */
     navigateRightSkip: function() {
-      this.navigateCol( +1 );
+      console.log( 'Navigate right skip' );
+      this.execute( new CommandNavigateRight( this ) );
     },
     /**
      * @public
      */
     navigateHome: function() {
-      this.navigate( MIN_INDEX, MIN_INDEX );
+      this.execute( new CommandNavigateHome( this ) );
     },
     /**
      * @public
      */
     navigateEnd: function() {
-      this.navigate( MAX_INDEX, MAX_INDEX );
+      this.execute( new CommandNavigateEnd( this ) );
     },
     /**
      * @public
      */
     navigateRowHome: function() {
-      this.navigateCol( -MAX_INDEX );
+      this.execute( new CommandNavigateRowHome( this ) );
     },
     /**
      * @public
      */
     navigateRowEnd: function() {
-      this.navigateCol( +MAX_INDEX );
+      this.execute( new CommandNavigateRowEnd( this ) );
     },
     /**
      * @public
@@ -479,29 +566,32 @@
      * @public
      */
     cellCut: function() {
-      this.cellCopy();
-      this.cellErase();
+      this.execute( new CommandCellCut( this ) );
     },
     /**
      * Copies the active cell's contents into the clipboard buffer.
-     * @public
+     * @private
      */
     cellCopy: function() {
-      this.clipboardCopy( this.getTableCell() );
+      let $temp = $('<input>');
+      $('body').append( $temp );
+      $temp.val( $(this.getTableCell()).text() ).select();
+      document.execCommand( 'copy' );
+      $temp.remove();
     },
     /**
      * Erases the active cell's contents.
      * @public
      */
     cellErase: function() {
-      $(this.getTableCell()).text( '' );
+      this.execute( new CommandCellUpdate( this, '' ) );
     },
     /**
      * Creates an input field at the active table cell.
      *
      * @param {object} $tableCell Contains the cell width and text value used
      * to create and populate the cell input field.
-     * @protected
+     * @private
      */
     cellInputCreate: function( $tableCell ) {
       $tableCell.addClass( this.settings.classActiveCellInput );
@@ -526,7 +616,7 @@
      * Destroys the previously created input field.
      *
      * @return The input field value.
-     * @protected
+     * @private
      */
     cellInputDestroy: function() {
       let $input = this.getCellInput();
@@ -558,16 +648,7 @@
      * @public
      */
     cellEditStart: function() {
-      let $tableCell = $(this.getTableCell());
-      let $input = this.cellInputCreate( $tableCell );
-      this.setCellInput( $input );
-
-      $input.on( 'focusout', function() {
-        $tableCell.text( $input.val() );
-      });
-
-      $tableCell.html( $input );
-      $input.focus();
+      this.execute( new CommandCellEditStart( this ) );
     },
     /**
      * Disables cell editing for the active table cell.
@@ -575,15 +656,18 @@
      * @public
      */
     cellEditStop: function() {
+      let plugin = this;
+      let $table = $(plugin.getTableBodyElement());
+
       if( this.getCellInput() !== false ) {
         let cellValue = this.cellInputDestroy();
+        this.execute( new CommandNoOp( this ) );
 
         let $tableCell = $(this.getTableCell());
         $tableCell.removeClass( this.settings.classActiveCellInput );
         $tableCell.text( cellValue );
       }
 
-      let $table = $(plugin.getTableBodyElement());
       $table.focus();
     },
     /**
@@ -600,7 +684,7 @@
      * @public
      */
     editSave: function() {
-      console.log( 'Save timesheet' );
+      console.log( 'Save cells' );
       this.cellEditStop();
     },
     /**
@@ -625,7 +709,7 @@
      * @public
      */
     editUndo: function() {
-      console.log( 'Timesheet undo' );
+      this.getCommandExecutor().undo();
     },
     /**
      * Re-executes the previously un-executed command.
@@ -633,21 +717,7 @@
      * @public
      */
     editRedo: function() {
-      console.log( 'Timesheet redo' );
-    },
-    /**
-     * Called when the copy command is invoked to copy the contents of the
-     * active cell into the system's copy buffer.
-     *
-     * @param {object} element The element contents to copy.
-     * @protected
-     */
-    clipboardCopy: function( element ) {
-      var $temp = $('<input>');
-      $('body').append( $temp );
-      $temp.val( $(element).text() ).select();
-      document.execCommand( 'copy' );
-      $temp.remove();
+      this.getCommandExecutor().redo();
     },
     /**
      * Called when the paste command is invoked to replace the contents of the
@@ -656,30 +726,295 @@
      * @param {object} e The paste event.
      * @protected
      */
-    clipboardPaste: function( e ) {
+    editPaste: function( e ) {
       let buffer = e.originalEvent.clipboardData.getData('text');
-      let $tableCell = $(this.getTableCell());
-
-      $tableCell.text( buffer );
+      this.execute( new CommandCellUpdate( this, buffer ) );
     }
   } );
 
-  $.fn[ pluginName ] = function( options ) {
+  $.fn[ PLUGIN_NAME ] = function( options ) {
     return this.each( function() {
-      if( !$.data( this, pluginKey ) ) {
+      if( !$.data( this, PLUGIN_KEY ) ) {
         var plugin = new Plugin( this, options );
-        $.data( this, pluginKey, plugin );
+        $.data( this, PLUGIN_KEY, plugin );
       }
     } );
   };
 
+  /**
+   * Tracks the list of commands that were executed so that they can be
+   * undone or redone as desired. This uses a stack to track the commands.
+   */
+  class CommandExecutor {
+    constructor() {
+      this._undoStack = [];
+      this._redoStack = [];
+    }
+
+    /**
+     * Returns undo command stack.
+     *
+     * @return {array} Stack of commands.
+     * @private
+     */
+    getUndoStack() {
+      return this._undoStack;
+    }
+
+    /**
+     * Returns redo command stack.
+     *
+     * @return {array} Stack of commands.
+     * @private
+     */
+    getRedoStack() {
+      return this._redoStack;
+    }
+
+    /**
+     * Executes the given command and then adds the command to the stack
+     * so that it can be undone at a later time.
+     *
+     * @param {object} command The command to execute and record.
+     * @public
+     */
+    execute( command ) {
+      console.log( 'execute command' );
+      console.dir( command );
+      command.execute();
+      this.getUndoStack().push( command );
+    }
+
+    /**
+     * Pops the most recently executed command off the stack and calls the
+     * command's routine to undo the command's changes to the data.
+     *
+     * @precondition None
+     * @postcondition The most recent command is popped off the undo stack.
+     * @postcondition The popped command is pushed onto the redo stack.
+     * @public
+     */
+    undo() {
+      let command = this.getUndoStack().pop();
+      console.log( 'undo command' );
+      console.dir( command );
+
+      if( typeof command !== 'undefined' ) {
+        command.undo();
+        this.getRedoStack().push( command );
+      }
+    }
+
+    /**
+     * Pops a command off the redo stack and then executes the command, which
+     * pushes it onto the undo stack.
+     *
+     * @precondition None
+     * @postcondition The most recent redo operations is popped from its stack.
+     * @postcondition The redo operation is performed.
+     * @public
+     */
+    redo() {
+      let command = this.getRedoStack().pop();
+
+      if( typeof command !== 'undefined' ) {
+        this.execute( command );
+      }
+    }
+  }
+
+  /**
+   * Defines a general command with the ability to restore state.
+   */
+  class Command {
+    constructor( plugin ) {
+      this._plugin = plugin;
+      this._state = plugin.retrieveState();
+    }
+
+    /**
+     * All commands override this
+     *
+     * @protected
+     */
+    execute() { }
+
+    undo() { 
+      this.getPlugin().restoreState( this.getState() );
+    }
+
+    getState() {
+      return this._state;
+    }
+
+    getPlugin() {
+      return this._plugin;
+    }
+
+    getTableCell() {
+      return this.getPlugin().getTableCell();
+    }
+  }
+
+  /**
+   * Changes the active cell location downwards one cell.
+   */
+  class CommandNavigate extends Command {
+    constructor( plugin, row, col ) {
+      super( plugin );
+      this._row = row;
+      this._col = col;
+    }
+
+    execute() {
+      let plugin = this.getPlugin();
+      plugin.deactivate();
+      plugin.setCellRow( this._row );
+      plugin.setCellCol( this._col );
+      plugin.activate();
+    }
+  }
+
+  /**
+   * Changes the active cell location downwards one cell.
+   */
+  class CommandNavigateDown extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigateRow( +1 ); }
+  }
+
+  /**
+   * Changes the active cell location upwards one cell.
+   */
+  class CommandNavigateUp extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigateRow( -1 ); }
+  }
+
+  /**
+   * Changes the active cell location leftwards one cell.
+   */
+  class CommandNavigateLeft extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigateCol( -1 ); }
+  }
+
+  /**
+   * Changes the active cell location rightwards one cell.
+   */
+  class CommandNavigateRight extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigateCol( +1 ); }
+  }
+
+  /**
+   * Changes the active cell location to first row and first column.
+   */
+  class CommandNavigateHome extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigate( MIN_INDEX, MIN_INDEX ); }
+  }
+
+  /**
+   * Changes the active cell location to last row and last column.
+   */
+  class CommandNavigateEnd extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigate( MAX_INDEX, MAX_INDEX ); }
+  }
+
+  /**
+   * Changes the active cell location to first column in the row.
+   */
+  class CommandNavigateRowHome extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigateCol( -MAX_INDEX ); }
+  }
+
+  /**
+   * Changes the active cell location to last column in the row.
+   */
+  class CommandNavigateRowEnd extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { this.getPlugin().navigateCol( +MAX_INDEX ); }
+  }
+
+  /**
+   * Changes the active cell location upwards.
+   */
+  class CommandNavigatePageUp extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() {
+      let plugin = this.getPlugin();
+      plugin.navigateRow( -plugin.settings.maxPageSize );
+    }
+  }
+
+  /**
+   * Changes the active cell location downwards.
+   */
+  class CommandNavigatePageDown extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() {
+      let plugin = this.getPlugin();
+      plugin.navigateRow( +plugin.settings.maxPageSize );
+    }
+  }
+
+  /**
+   * Copies the active cell value into the paste buffer, then erases it.
+   */
+  class CommandCellCut extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() {
+      let plugin = this.getPlugin();
+      plugin.cellCopy();
+      plugin.cellErase();
+    }
+  }
+
+  class CommandCellEditStart extends Command {
+    constructor( plugin, cellValue ) {
+      super( plugin );
+    }
+      
+    execute() {
+      let plugin = this.getPlugin();
+      let $tableCell = $(plugin.getTableCell());
+      let $input = plugin.cellInputCreate( $tableCell );
+      plugin.setCellInput( $input );
+
+      $input.on( 'focusout', function() {
+        $tableCell.text( $input.val() );
+      });
+
+      $tableCell.html( $input );
+      $input.focus();
+    }
+  }
+
+  /**
+   * Changes the active cell value.
+   */
+  class CommandCellUpdate extends Command {
+    constructor( plugin, cellValue ) {
+      super( plugin );
+      this._cellValue = cellValue;
+    }
+
+    execute() {
+      $(this.getTableCell()).text( this._cellValue );
+    }
+  }
+
+  /**
+   * Preserves the active cell state.
+   */
+  class CommandNoOp extends Command {
+    constructor( plugin ) { super( plugin ); }
+    execute() { }
+  }
+
   window.Plugin = Plugin;
 })(jQuery, window, document);
 
-/**
- * Prevent the tab key from moving focus to the browser's widgets.
- */
-Mousetrap.prototype.stopCallback = function(e, element, combo) {
-  e.preventDefault();
-  return false;
-}
