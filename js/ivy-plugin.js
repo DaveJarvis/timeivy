@@ -192,7 +192,8 @@
       let row = $cell.parent().parent().children().index($cell.parent());
 
       if( this.isActiveCell( row, col ) === false ) {
-        this.execute( new CommandNavigate( this, row, col ) );
+        // Ensure that the click navigation can be undone.
+        this.navigate( row, col );
       }
     },
     /**
@@ -262,11 +263,15 @@
      */
     bindPasteHandler: function() {
       let plugin = this;
-      let $table = $(plugin.getTableBodyElement());
 
-      // This requires that the table body element retains focus.
-      $table.on( 'paste', function( e ) {
-        plugin.editPaste( e );
+      $(document).on( 'paste', function( e ) {
+        if( e.originalEvent ) {
+          let buffer = e.originalEvent.clipboardData.getData('text');
+          plugin.execute( new CommandCellUpdate( plugin, buffer ) );
+
+          e.stopPropagation();
+          e.preventDefault();
+        }
       } );
     },
     /**
@@ -402,9 +407,6 @@
         cellVal: $(this.getTableCell()).text()
       };
 
-      console.log( 'retrieve state' );
-      console.dir( result );
-
       return result;
     },
     /**
@@ -431,6 +433,8 @@
      * @private
      */
     execute: function( command ) {
+      //console.log( 'execute ' + command.constructor.name );
+      //console.dir( command );
       this.getCommandExecutor().execute( command );
     },
     /**
@@ -460,6 +464,12 @@
      * @public
      */
     navigate: function( row, col ) {
+      let $input = this.getCellInput();
+
+      if( $input !== false ) {
+        this.cellEditStop();
+      }
+
       this.execute( new CommandNavigate( this, row, col ) );
     },
     /**
@@ -701,21 +711,18 @@
       this.execute( new CommandCellEditStart( this ) );
     },
     /**
-     * Disables cell editing for the active table cell.
+     * Disables cell editing for the active table cell. This must not
+     * add the command to the undo/redo history.
      *
      * @public
      */
     cellEditStop: function() {
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
-
-      if( this.getCellInput() !== false ) {
-        let cellValue = this.cellInputDestroy();
-
-        let $tableCell = $(this.getTableCell());
-        $tableCell.removeClass( this.settings.classActiveCellInput );
-        $tableCell.text( cellValue );
-      }
+      let cellValue = plugin.cellInputDestroy();
+      let $tableCell = $(plugin.getTableCell());
+      $tableCell.removeClass( plugin.settings.classActiveCellInput );
+      $tableCell.text( cellValue );
 
       $table.focus();
     },
@@ -767,17 +774,6 @@
      */
     editRedo: function() {
       this.getCommandExecutor().redo();
-    },
-    /**
-     * Called when the paste command is invoked to replace the contents of the
-     * active cell with the system's copy buffer.
-     *
-     * @param {object} e The paste event.
-     * @protected
-     */
-    editPaste: function( e ) {
-      let buffer = e.originalEvent.clipboardData.getData('text');
-      this.execute( new CommandCellUpdate( this, buffer ) );
     }
   } );
 
@@ -828,9 +824,6 @@
      * @public
      */
     execute( command ) {
-      console.log( 'execute command' );
-      console.log( command.constructor.name );
-      console.dir( command );
       command.execute();
       this.getUndoStack().push( command );
     }
@@ -846,8 +839,6 @@
      */
     undo() {
       let command = this.getUndoStack().pop();
-      console.log( 'undo command' );
-      console.dir( command );
 
       if( typeof command !== 'undefined' ) {
         command.undo();
@@ -883,7 +874,7 @@
     }
 
     /**
-     * All commands override this
+     * All commands override this to expose a consistent interface.
      *
      * @protected
      */
@@ -900,14 +891,10 @@
     getPlugin() {
       return this._plugin;
     }
-
-    getTableCell() {
-      return this.getPlugin().getTableCell();
-    }
   }
 
   /**
-   * Changes the active cell location downwards one cell.
+   * Changes the active cell location.
    */
   class CommandNavigate extends Command {
     constructor( plugin, row, col ) {
@@ -918,7 +905,6 @@
 
     execute() {
       let plugin = this.getPlugin();
-      plugin.cellEditStop();
       plugin._navigate( this._row, this._col );
     }
   }
@@ -965,7 +951,8 @@
     }
 
     execute() {
-      $(this.getTableCell()).text( this._cellValue );
+      let plugin = this.getPlugin();
+      $(plugin.getTableCell()).text( this._cellValue );
     }
   }
 
