@@ -171,6 +171,8 @@
     /**
      * Calls the key binding library to prevent keys from bubbling to the
      * browser itself.
+     *
+     * @private
      */
     setup: function() {
       Mousetrap.prototype.stopCallback = function( e, element, combo ) {
@@ -285,6 +287,7 @@
      * Primitive to get the active cell row from the model.
      *
      * @return {number} The active cell row, 0-based.
+     *
      * @public
      */
     getCellRow: function() {
@@ -294,6 +297,7 @@
      * Primitive to get the active cell column from the model.
      *
      * @return {number} The active cell column, 0-based.
+     *
      * @public
      */
     getCellCol: function() {
@@ -303,6 +307,7 @@
      * Primitive to get the table body via jQuery.
      *
      * @return {object} An element that represents the tbody containing cells.
+     *
      * @public
      */
     getTableBodyElement: function() {
@@ -313,6 +318,7 @@
      * using jQuery as $(this.getTableCell()).
      *
      * @return {object} This returns a td element that can be styled.
+     *
      * @public
      */
     getTableCell: function() {
@@ -406,20 +412,38 @@
      *
      * @param {object} state The state object returned from a call to
      * retrieveState.
+     * @private
      */
     restoreState: function( state ) {
-      this.navigate( state.cellRow, state.cellCol );
+      this._navigate( state.cellRow, state.cellCol );
       $(this.getTableCell()).text( state.cellVal );
     },
+    /**
+     * @private
+     */
     getCommandExecutor: function() {
       return this._commandExecutor;
     },
     /**
      * Delegates execution of a command to the command executor, which records
      * commands for undo and redo purposes.
+     *
+     * @private
      */
     execute: function( command ) {
       this.getCommandExecutor().execute( command );
+    },
+    /**
+     * Navigates to the given row and column without storing the command
+     * in the undo/redo history.
+     * 
+     * @private
+     */
+    _navigate: function( row, col ) {
+      this.deactivate();
+      this.setCellRow( row );
+      this.setCellCol( col );
+      this.activate();
     },
     /**
      * Changes the active cell. All other navigate functions call this
@@ -429,13 +453,13 @@
      * @param {number} col The new column number for the active cell.
      *
      * @postcondition Cell editing has stopped.
-     * @postcondition The previously activate cell is deactivated.
+     * @postcondition The previously activated cell is deactivated.
      * @postcondition The cell at (row, col) is activated.
+     * @postcondition The undo buffer includes this navigate command.
      *
-     * @protected
+     * @public
      */
     navigate: function( row, col ) {
-      this.cellEditStop();
       this.execute( new CommandNavigate( this, row, col ) );
     },
     /**
@@ -464,90 +488,113 @@
      * @public
      */
     navigatePageUp: function() {
-      this.execute( new CommandNavigatePageUp( this ) );
+      this.navigateRow( -this.settings.maxPageSize );
     },
     /**
      * @public
      */
     navigatePageDown: function() {
-      this.execute( new CommandNavigatePageDown( this ) );
+      this.navigateRow( +this.settings.maxPageSize );
     },
     /**
+     * Changes the active cell location upwards one cell.
+     *
+     * @public
+     */
+    navigateUp: function() {
+      this.navigateRow( -1 );
+    },
+    /**
+     * Changes the active cell location downwards one cell.
+     *
+     * @public
+     */
+    navigateDown: function() {
+      this.navigateRow( +1 );
+    },
+    /**
+     * Changes the active cell location leftwards one cell.
+     *
+     * @public
+     */
+    navigateLeft: function() {
+      this.navigateCol( -1 );
+    },
+    /**
+     * Changes the active cell location rightwards one cell.
+     *
+     * @public
+     */
+    navigateRight: function() {
+      this.navigateCol( +1 );
+    },
+    /**
+     * Changes the active cell location upwards to the first non-empty cell.
+     *
      * @public
      */
     navigateUpSkip: function() {
       console.log( 'Navigate up skip' );
-      this.execute( new CommandNavigateUp( this ) );
+      this.navigateRow( -1 );
     },
     /**
+     * Changes the active cell location downwards to the first non-empty cell.
+     *
      * @public
      */
     navigateDownSkip: function() {
       console.log( 'Navigate down skip' );
-      this.execute( new CommandNavigateDown( this ) );
+      this.navigateRow( +1 );
     },
     /**
-     * @public
-     */
-    navigateUp: function() {
-      this.execute( new CommandNavigateUp( this ) );
-    },
-    /**
-     * @public
-     */
-    navigateDown: function() {
-      console.log( 'Navigate down' );
-      this.execute( new CommandNavigateDown( this ) );
-    },
-    /**
-     * @public
-     */
-    navigateLeft: function() {
-      this.execute( new CommandNavigateLeft( this ) );
-    },
-    /**
+     * Changes the active cell location leftwards to the first non-empty cell.
+     *
      * @public
      */
     navigateLeftSkip: function() {
       console.log( 'Navigate left skip' );
-      this.execute( new CommandNavigateLeft( this ) );
+      this.navigateCol( -1 );
     },
     /**
-     * @public
-     */
-    navigateRight: function() {
-      this.execute( new CommandNavigateRight( this ) );
-    },
-    /**
+     * Changes the active cell location rightwards to the first non-empty cell.
+     *
      * @public
      */
     navigateRightSkip: function() {
       console.log( 'Navigate right skip' );
-      this.execute( new CommandNavigateRight( this ) );
+      this.navigateCol( +1 );
     },
     /**
+     * Changes the active cell location to the upper-left cell.
+     *
      * @public
      */
     navigateHome: function() {
-      this.execute( new CommandNavigateHome( this ) );
+      this.navigate( MIN_INDEX, MIN_INDEX );
     },
     /**
+     * Changes the active cell location to the lower-right cell.
+     *
      * @public
      */
     navigateEnd: function() {
-      this.execute( new CommandNavigateEnd( this ) );
+      this.navigate( MAX_INDEX, MAX_INDEX );
     },
     /**
+     * Changes the active cell location to the left-most column.
+     *
      * @public
      */
     navigateRowHome: function() {
-      this.execute( new CommandNavigateRowHome( this ) );
+      this.navigateCol( -MAX_INDEX );
     },
     /**
+     * Changes the active cell location to the right-most column.
+     *
      * @public
      */
     navigateRowEnd: function() {
-      this.execute( new CommandNavigateRowEnd( this ) );
+      this.navigateCol( +MAX_INDEX );
     },
     /**
      * @public
@@ -563,6 +610,7 @@
     },
     /**
      * Copies the active cell's contents and then erases the contents.
+     *
      * @public
      */
     cellCut: function() {
@@ -570,6 +618,7 @@
     },
     /**
      * Copies the active cell's contents into the clipboard buffer.
+     *
      * @private
      */
     cellCopy: function() {
@@ -581,6 +630,7 @@
     },
     /**
      * Erases the active cell's contents.
+     *
      * @public
      */
     cellErase: function() {
@@ -661,7 +711,6 @@
 
       if( this.getCellInput() !== false ) {
         let cellValue = this.cellInputDestroy();
-        this.execute( new CommandNoOp( this ) );
 
         let $tableCell = $(this.getTableCell());
         $tableCell.removeClass( this.settings.classActiveCellInput );
@@ -780,6 +829,7 @@
      */
     execute( command ) {
       console.log( 'execute command' );
+      console.log( command.constructor.name );
       console.dir( command );
       command.execute();
       this.getUndoStack().push( command );
@@ -868,96 +918,8 @@
 
     execute() {
       let plugin = this.getPlugin();
-      plugin.deactivate();
-      plugin.setCellRow( this._row );
-      plugin.setCellCol( this._col );
-      plugin.activate();
-    }
-  }
-
-  /**
-   * Changes the active cell location downwards one cell.
-   */
-  class CommandNavigateDown extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigateRow( +1 ); }
-  }
-
-  /**
-   * Changes the active cell location upwards one cell.
-   */
-  class CommandNavigateUp extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigateRow( -1 ); }
-  }
-
-  /**
-   * Changes the active cell location leftwards one cell.
-   */
-  class CommandNavigateLeft extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigateCol( -1 ); }
-  }
-
-  /**
-   * Changes the active cell location rightwards one cell.
-   */
-  class CommandNavigateRight extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigateCol( +1 ); }
-  }
-
-  /**
-   * Changes the active cell location to first row and first column.
-   */
-  class CommandNavigateHome extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigate( MIN_INDEX, MIN_INDEX ); }
-  }
-
-  /**
-   * Changes the active cell location to last row and last column.
-   */
-  class CommandNavigateEnd extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigate( MAX_INDEX, MAX_INDEX ); }
-  }
-
-  /**
-   * Changes the active cell location to first column in the row.
-   */
-  class CommandNavigateRowHome extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigateCol( -MAX_INDEX ); }
-  }
-
-  /**
-   * Changes the active cell location to last column in the row.
-   */
-  class CommandNavigateRowEnd extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { this.getPlugin().navigateCol( +MAX_INDEX ); }
-  }
-
-  /**
-   * Changes the active cell location upwards.
-   */
-  class CommandNavigatePageUp extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() {
-      let plugin = this.getPlugin();
-      plugin.navigateRow( -plugin.settings.maxPageSize );
-    }
-  }
-
-  /**
-   * Changes the active cell location downwards.
-   */
-  class CommandNavigatePageDown extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() {
-      let plugin = this.getPlugin();
-      plugin.navigateRow( +plugin.settings.maxPageSize );
+      plugin.cellEditStop();
+      plugin._navigate( this._row, this._col );
     }
   }
 
@@ -1005,14 +967,6 @@
     execute() {
       $(this.getTableCell()).text( this._cellValue );
     }
-  }
-
-  /**
-   * Preserves the active cell state.
-   */
-  class CommandNoOp extends Command {
-    constructor( plugin ) { super( plugin ); }
-    execute() { }
   }
 
   window.Plugin = Plugin;
