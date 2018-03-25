@@ -11,51 +11,50 @@ desktop spreadsheet applications.
 
 When not editing a cell, the following keyboard bindings apply:
 
-Key              | Action
+Hot Key          | Action
 ---              | ------
-Ctrl+i           | [insert row after]  (keyboards without insert key)
-Ctrl+Shift+i     | [insert row before] (keyboards without insert key)
-Insert           | [insert row after]
-Alt+Insert       | [insert row before]
-Delete           | [delete cell contents]
-F2               | [edit mode]
-Enter            | [edit mode]
-<any char>       | [edit mode] [bubble keypress]
-Spacebar         | [edit mode] [clear text] [bubble keypress]
-Up Arrow         | [active cell up]
-Down Arrow       | [active cell down]
-Left Arrow       | [active cell left]
-Right Arrow      | [active cell right]
-Page Up          | [active cell page up]
-Page Down        | [active cell page down]
-Tab              | [active cell right]
-Shift+tab        | [active cell left]
-Ctrl+d           | [duplicate cell above]
-Ctrl+s           | [save cells]
-Ctrl+Up Arrow    | [skip all empty cells up]
-Ctrl+Down Arrow  | [skip all empty cells down down]
-Ctrl+Left Arrow  | [active cell left]
-Ctrl+Right Arrow | [active cell right]
-Home             | [active cell first column, current row]
-End              | [active cell last non-empty column, current row]
-Ctrl+Home        | [active cell first column, first row]
-Ctrl+End         | [active cell last non-empty column, last non-empty row]
-Ctrl+Page Up     | [previous worksheet]
-Ctrl+Page Down   | [next worksheet]
+Ctrl+i           | Insert a copy of the current row below the active cell
+Ctrl+Shift+i     | "
+Insert           | "
+Alt+Insert       | "
+Delete           | Delete the active cell's contents
+F2               | Enter edit mode for the active cell
+Enter            | Navigate one cell down
+Up Arrow         | Navigate one cell up
+Down Arrow       | Navigate one cell down
+Left Arrow       | Navigate one cell left
+Shift+Tab        | "
+Right Arrow      | Navigate one cell right
+Tab              | "
+Page Up          | Navigate one page up
+Page Down        | Navigate one page down
+Ctrl+d           | Duplicate cell above
+Ctrl+Up Arrow    | Navigate to the first non-empty cell upwards
+Ctrl+Down Arrow  | Navigate to the first non-empty cell downwards
+Ctrl+Left Arrow  | Navigate to the first non-empty cell leftwards
+Ctrl+Right Arrow | Navigate to the first non-empty cell rightwards
+Home             | Navigate to the current row's first column
+End              | Navigate to the current row's last non-empty column
+Ctrl+Home        | Navigate to the first row and first column
+Ctrl+End         | Navigate to the last row, and last column
+Ctrl+x           | Cut active cell text
+Ctrl+c           | Copy active cell text
+Ctrl+Insert      | "
+Ctrl+v           | Paste active cell text
+Ctrl+z           | Undo the previous action
+
+Most other keys will enter edit mode for the active cell after first
+clearing the cell contents.
 
 ## Edit Mode Key Bindings
 
-When 
+When ending a cell, the following keyboard bindings apply:
 
-Ctrl+a      - [select all text]
-Ctrl+c      - [copy cell text]
-Ctrl+Insert - [copy cell text]
-Ctrl+x      - [cut cell text]
-Ctrl+v      - [replace cell text]
-Ctrl+z      - [undo edit]
-Up Arrow    - [navigate mode] [save] [bubble keypress]
-Down Arrow  - [navigate mode] [save] [bubble keypress]
-ESC         - [navigate mode] [revert]
-Tab         - [navigate mode] [save] [bubble keypress]
-Shift+Tab   - [navigate mode] [save] [bubble keypress]
+Hot Key     | Action
+---         | ------
+ESC         | Enter navigate mode, undo any changes
+Up Arrow    | Enter navigate mode, navigate away
+Down Arrow  | "
+Tab         | "
+Shift+Tab   | "
 
