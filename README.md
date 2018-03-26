@@ -38,20 +38,20 @@ Ctrl+End         | Navigate to the last row, and last column
 Ctrl+x           | Cut active cell text
 Ctrl+c           | Copy active cell text
 Ctrl+Insert      | "
-Ctrl+v           | Paste active cell text
+Ctrl+v           | Paste copied text into the application
 Ctrl+z           | Undo the previous action
 
 Most other keys will enter edit mode for the active cell after first
 clearing the cell contents.
 
-## Edit Mode Key Bindings
+### Edit Mode Key Bindings
 
 When ending a cell, the following keyboard bindings apply:
 
 Hot Key     | Action
 ---         | ------
 Esc         | Enter navigate mode, undo any changes
-Up Arrow    | Enter navigate mode, navigate away
+Up Arrow    | Enter navigate mode, perform navigation
 Down Arrow  | "
 Tab         | "
 Shift+Tab   | "

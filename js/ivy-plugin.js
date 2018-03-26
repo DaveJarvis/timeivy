@@ -27,6 +27,7 @@
   var defaults = {
     classActiveCell:      'active',
     classActiveCellInput: 'edit',
+    classCellReadOnly:    'readonly',
     maxPageSize: 30,
     maxUndoLevels: 1000,
     modeNavigate: [
@@ -61,6 +62,7 @@
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
 
+      { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
       { k: 'ctrl+shift+z', f: 'editRedo' },
       { k: 'ctrl+y',       f: 'editRedo' },
@@ -324,6 +326,14 @@
       return col === this.getCellCol();
     },
     /**
+     * Answers whether the active cell has a read-only class.
+     *
+     * @return {boolean} True means the active cell has a read-only class.
+     */
+    isActiveCellReadOnly: function() {
+      return $(this.getTableCell()).hasClass( this.settings.classCellReadOnly );
+    },
+    /**
      * Primitive to add the active class to the table cell represented by
      * the cell model.
      *
@@ -362,8 +372,7 @@
     /**
      * Reverts the state of the plugin from a previously retrieved state.
      *
-     * @param {object} state The state object returned from a call to
-     * retrieveState.
+     * @param {object} state A state object.
      * @private
      */
     cellStateRestore: function( state ) {
@@ -417,12 +426,7 @@
      * @public
      */
     navigate: function( row, col ) {
-      let $input = this.getCellInput();
-
-      if( $input !== false ) {
-        this.cellEditStop();
-      }
-
+      this.cellEditStop();
       this.execute( new CommandNavigate( this, row, col ) );
     },
     /**
@@ -661,40 +665,53 @@
      * @public
      */
     cellEditStart: function() {
-      this.execute( new CommandCellEditStart( this ) );
+      if( !this.isActiveCellReadOnly() ) {
+        this.execute( new CommandCellEditStart( this ) );
+      }
     },
     /**
-     * Disables cell editing for the active table cell. This must not
-     * add the command to the undo/redo history.
+     * Disables cell editing for the active table cell. This must not add
+     * the command to the undo/redo history. This ensures that the cell
+     * is being edited prior to destroying it, so calling anytime is safe.
      *
+     * @return {boolean} False means the cell was not being edited.
      * @public
      */
     cellEditStop: function() {
-      let plugin = this;
-      let $table = $(plugin.getTableBodyElement());
-      let cellValue = plugin.cellInputDestroy();
-      let $tableCell = $(plugin.getTableCell());
-      $tableCell.removeClass( plugin.settings.classActiveCellInput );
-      $tableCell.text( cellValue );
+      let $input = this.getCellInput();
+      let result = false;
 
-      $table.focus();
+      if( $input !== false ) {
+        let plugin = this;
+        let $table = $(plugin.getTableBodyElement());
+        let cellValue = plugin.cellInputDestroy();
+        let $tableCell = $(plugin.getTableCell());
+        $tableCell.removeClass( plugin.settings.classActiveCellInput );
+        $tableCell.text( cellValue );
+
+        $table.focus();
+        result = true;
+      }
+
+      return result;
     },
     /**
-     * Disables cell editing for the active table cell and reverts to its
-     * previous value.
+     * Reverts any edits to their previous value; if there are no edits in
+     * progress, then this will do nothing.
      *
      * @protected
      */
     cellEditCancel: function() {
-      console.log( 'Edit cancel' );
-      this.cellEditStop();
+      // Only undo if the user was in edit mode.
+      if( this.cellEditStop() ) {
+        this.editUndo();
+      }
     },
     /**
      * @public
      */
     editSave: function() {
       console.log( 'Save cells' );
-      this.cellEditStop();
     },
     /**
      * Inserts a new row before the active cell row.
@@ -980,7 +997,10 @@ Array.prototype.peek = function() {
 };
 
 /**
- * Ensures that two stacks are equal.
+ * Ensures that two objects are equal.
+ *
+ * @param {object} x The main object to compare.
+ * @param {object} y The object to check against x.
  */
 Object.equals = function( x, y ) {
   // 'undefined' shall not pass.
