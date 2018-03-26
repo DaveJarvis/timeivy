@@ -4,6 +4,14 @@
  * cells.
  */
 $(document).ready( function() {
-  $('#ivy tbody').ivy();
+  $('#ivy tbody').ivy({
+    onCellValueChange: function( cellValue, row, col ) {
+      if( col === 1 || col === 2 ) {
+        cellValue = cellValue.toTime();
+      }
+
+      return cellValue;
+    }
+  });
 } );
 

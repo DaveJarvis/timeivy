@@ -42,8 +42,6 @@
       { k: 'ctrl+right',   f: 'navigateRightSkip' },
       { k: 'pageup',       f: 'navigatePageUp' },
       { k: 'pagedown',     f: 'navigatePageDown' },
-      { k: 'ctrl+pageup',  f: 'navigateSheetFore' },
-      { k: 'ctrl+pagedown',f: 'navigateSheetAnte' },
       { k: 'home',         f: 'navigateRowHome' },
       { k: 'end',          f: 'navigateRowEnd' },
       { k: 'ctrl+home',    f: 'navigateHome' },
@@ -61,17 +59,30 @@
 
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
+      { k: 'command+i',    f: 'editInsertRow' },
 
       { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
+      { k: 'command+z',    f: 'editUndo' },
       { k: 'ctrl+shift+z', f: 'editRedo' },
       { k: 'ctrl+y',       f: 'editRedo' },
+      { k: 'command+y',    f: 'editRedo' },
     ],
     modeEdit: [
       { k: 'up',           f: 'navigateUp' },
       { k: 'down',         f: 'navigateDown' },
       { k: 'enter',        f: 'cellEditStop' },
-    ]
+    ],
+    /**
+     * Called when the active cell value changes.
+     *
+     * @param {string} cellValue The value for the new cell.
+     * @param {number} row The cellValue row that has changed.
+     * @param {number} col The cellValue column that has changed.
+     */
+    onCellValueChange: function( cellValue, row, col ) {
+      return cellValue;
+    }
   };
 
   /**
@@ -179,13 +190,13 @@
         // If the character code is numeric, it is a non-printable char.
         var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
 
-        if( e.type === 'keypress' && charCode && !e.ctrlKey ) {
+        // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
+        if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
           console.log( 'KEYPRESS!' );
+          //Mousetrap.reset();
           //plugin.cellEditStart();
         }
       } );
-
-      $table.focus();
     },
     /**
      * Binds the keyboard to cell model navigation.
@@ -204,8 +215,9 @@
         let f = nav[i].f;
 
         Mousetrap.bind( k, function( e ) {
-          eval( 'plugin.' + f ).call( plugin );
-        });
+          // Call the mapped function by name, indirectly.
+          plugin[ f ]();
+        } );
       }
     },
     /**
@@ -364,7 +376,7 @@
       let result = {
         cellRow: this.getCellRow(),
         cellCol: this.getCellCol(),
-        cellVal: $(this.getTableCell()).text()
+        cellValue: $(this.getTableCell()).text()
       };
 
       return result;
@@ -377,7 +389,7 @@
      */
     cellStateRestore: function( state ) {
       this._navigate( state.cellRow, state.cellCol );
-      $(this.getTableCell()).text( state.cellVal );
+      this.setCellValue( state.cellValue );
     },
     /**
      * @private
@@ -395,9 +407,24 @@
       this.getCommandExecutor().execute( command );
     },
     /**
+     * Ensure that the document body retains focus. This has the side
+     * effect that when the table is loaded, the user can start typing
+     * immediately.
+     */
+    focus: function() {
+      $(this.getTableBodyElement()).focus();
+    },
+    /**
      * Navigates to the given row and column without storing the command
      * in the undo/redo history.
      * 
+     * @param {number} row The new row number for the active cell.
+     * @param {number} col The new column number for the active cell.
+     *
+     * @postcondition The previously activated cell is deactivated.
+     * @postcondition The cell at (row, col) is activated.
+     * @postcondition The table body has input focus.
+     *
      * @private
      */
     _navigate: function( row, col ) {
@@ -405,11 +432,7 @@
       this.setCellRow( row );
       this.setCellCol( col );
       this.activate();
-
-      // Ensure that the document body retains focus. This has the side
-      // effect that when the table is loaded, the user can start typing
-      // immediately.
-      $(this.getTableBodyElement()).focus();
+      this.focus();
     },
     /**
      * Changes the active cell. All other navigate functions call this
@@ -422,6 +445,7 @@
      * @postcondition The previously activated cell is deactivated.
      * @postcondition The cell at (row, col) is activated.
      * @postcondition The undo buffer includes this navigate command.
+     * @postcondition The table body has input focus.
      *
      * @public
      */
@@ -564,18 +588,6 @@
       this.navigateCol( +MAX_INDEX );
     },
     /**
-     * @public
-     */
-    navigateSheetFore: function() {
-      console.log( 'Navigate forward' );
-    },
-    /**
-     * @public
-     */
-    navigateSheetAnte: function() {
-      console.log( 'Navigate backward' );
-    },
-    /**
      * Copies the active cell's contents and then erases the contents.
      *
      * @public
@@ -660,7 +672,8 @@
       this._$cellInput = $input;
     },
     /**
-     * Enables cell editing for the active table cell.
+     * Enables cell editing for the active table cell, so long as the cell
+     * is not marked as read-only.
      *
      * @public
      */
@@ -672,28 +685,42 @@
     /**
      * Disables cell editing for the active table cell. This must not add
      * the command to the undo/redo history. This ensures that the cell
-     * is being edited prior to destroying it, so calling anytime is safe.
+     * is being edited prior to destroying it.
      *
      * @return {boolean} False means the cell was not being edited.
      * @public
      */
     cellEditStop: function() {
       let $input = this.getCellInput();
-      let result = false;
+      let edit = false;
 
       if( $input !== false ) {
         let plugin = this;
-        let $table = $(plugin.getTableBodyElement());
         let cellValue = plugin.cellInputDestroy();
         let $tableCell = $(plugin.getTableCell());
-        $tableCell.removeClass( plugin.settings.classActiveCellInput );
-        $tableCell.text( cellValue );
 
-        $table.focus();
-        result = true;
+        $tableCell.removeClass( plugin.settings.classActiveCellInput );
+
+        let row = this.getCellRow();
+        let col = this.getCellCol();
+
+        cellValue = this.settings.onCellValueChange( cellValue, row, col );
+        this.setCellValue( cellValue );
+        this.focus();
+
+        edit = true;
       }
 
-      return result;
+      return edit;
+    },
+    /**
+     * Called when a new value is applied to the active cell.
+     *
+     * @param {string} cellValue The new active cell value.
+     * @public
+     */
+    setCellValue: function( cellValue ) {
+      $(this.getTableCell()).text( cellValue );
     },
     /**
      * Reverts any edits to their previous value; if there are no edits in
@@ -702,7 +729,7 @@
      * @protected
      */
     cellEditCancel: function() {
-      // Only undo if the user was in edit mode.
+      // Prevent multiple undo actions from consecutive Esc key presses.
       if( this.cellEditStop() ) {
         this.editUndo();
       }
@@ -931,7 +958,7 @@
       plugin.setCellInput( $input );
 
       $input.on( 'focusout', function() {
-        $tableCell.text( $input.val() );
+        plugin.setCellValue( $input.val() );
       });
 
       $tableCell.html( $input );
@@ -950,7 +977,7 @@
 
     execute() {
       let plugin = this.getPlugin();
-      $(plugin.getTableCell()).text( this._cellValue );
+      plugin.setCellValue( this._cellValue );
     }
   }
 
@@ -971,7 +998,7 @@
 
       // Uniquely identify the row so that multiple clones of the same row
       // will result in different states, and thereby join the undo stack.
-      this.setState( { id: performance.now(), clone: $clone } );
+      this.setState( { id: (new Date()).getTime(), clone: $clone } );
       $row.after( $clone );
 
       plugin.activate();

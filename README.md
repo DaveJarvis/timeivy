@@ -39,6 +39,7 @@ Ctrl+x           | Cut active cell text
 Ctrl+c           | Copy active cell text
 Ctrl+Insert      | "
 Ctrl+v           | Paste copied text into the application
+Shift+Insert     | "
 Ctrl+z           | Undo the previous action
 
 Most other keys will enter edit mode for the active cell after first

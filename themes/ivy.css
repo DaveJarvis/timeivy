@@ -87,7 +87,7 @@ table.ivy td.edit {
 /**
  * Make the input field fully transparent and completely borderless.
  */
-table.ivy td.active input {
+table.ivy td input {
   background-color: rgba( 0, 0, 0, 0 );
   border-width: 0px;
 	border: none;
