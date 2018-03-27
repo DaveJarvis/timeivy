@@ -49,9 +49,9 @@ clearing the cell contents.
 
 When ending a cell, the following keyboard bindings apply:
 
-Esc         | Enter navigate mode, undo any changes
 Hot Key     | Action
 ---         | ---
+Esc         | Enter navigate mode, undo any changes
 Up Arrow    | Enter navigate mode, perform navigation
 Down Arrow  | "
 Tab         | "
