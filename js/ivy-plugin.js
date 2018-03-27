@@ -177,7 +177,7 @@
 
       $table.on( 'dblclick', 'td', function() {
         plugin.navigateTableCell( $(this) );
-        plugin.cellEditStart();
+        plugin.cellEditStart( false );
       } );
     },
     /**
@@ -189,17 +189,13 @@
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
 
-      console.log( 'bind printable keys' );
-
       $table.on( 'keypress', function( e ) {
         // If the character code is numeric, it is a non-printable char.
         var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
 
         // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
         if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
-          console.log( 'KEYPRESS!' );
-          plugin.cellErase();
-          plugin.cellEditStart();
+          plugin.cellEditStart( true );
         }
       } );
     },
@@ -211,8 +207,6 @@
     unbindPrintableKeys: function() {
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
-
-      console.log( 'unbind printable keys' );
 
       $table.off( 'keypress' );
     },
@@ -710,11 +704,14 @@
      * Enables cell editing for the active table cell, so long as the cell
      * is not marked as read-only.
      *
+     * @param {boolean} erase Set to true to first erase the field.
      * @public
      */
-    cellEditStart: function() {
-      if( !this.isActiveCellReadOnly() ) {
-        this.execute( new CommandCellEditStart( this ) );
+    cellEditStart: function( erase ) {
+      let plugin = this;
+
+      if( !plugin.isActiveCellReadOnly() ) {
+        plugin.execute( new CommandCellEditStart( plugin, erase ) );
       }
     },
     /**
@@ -985,8 +982,12 @@
    * prior to injecting an input field.
    */
   class CommandCellEditStart extends Command {
-    constructor( plugin, cellValue ) {
+    constructor( plugin, erase ) {
       super( plugin );
+
+      if( erase ) {
+        plugin.setCellValue( '' );
+      }
     }
 
     execute() {
@@ -1056,7 +1057,7 @@
      * Returns a unique identifier for the command's state.
      */
     getId() {
-      return (new Date()).getTime();
+      return (new Date()).getTime() + Math.random();
     }
   }
 
