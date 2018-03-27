@@ -97,6 +97,7 @@
     this.element = element;
 
     this.settings = $.extend( {}, defaults, options );
+    this.settings.ivy = this;
     this._defaults = defaults;
     this._name = PLUGIN_NAME;
     this._cell = [MIN_INDEX, MIN_INDEX];
@@ -177,7 +178,7 @@
 
       $table.on( 'dblclick', 'td', function() {
         plugin.navigateTableCell( $(this) );
-        plugin.cellEditStart( false );
+        plugin.cellEditStart();
       } );
     },
     /**
@@ -195,7 +196,7 @@
 
         // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
         if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
-          plugin.cellEditStart( true );
+          plugin.cellEditStart( String.fromCharCode( charCode ) );
         }
       } );
     },
@@ -310,15 +311,29 @@
     },
     /**
      * Primitive to get the active table cell element, which can be referenced
-     * using jQuery as $(this.getTableCell()).
+     * using jQuery.
      *
      * @return {object} This returns a td element that can be styled.
      * @public
      */
     getTableCell: function() {
-      let table = this.getTableBodyElement();
       let row = this.getCellRow();
       let col = this.getCellCol();
+
+      return this.getCellValue( row, col );
+    },
+    /**
+     * Primitive to get the cell value at the given row and column. The row
+     * and column values must be sanitized prior to calling.
+     *
+     * @param {number} row The cell value's row to retrieve.
+     * @param {number} col The cell value's column to retrieve.
+     * @return {string} The cell value at the given row and column.
+     * @public
+     */
+    getCellValue: function( row, col ) {
+      let plugin = this;
+      let table = this.getTableBodyElement();
 
       return table.rows[ row ].cells[ col ];
     },
@@ -636,19 +651,12 @@
      *
      * @postcondition The update operation is added to the stack.
      * @postcondition The active cell is empty.
-     * @postcondition The client is notified of the clear event.
+     * @postcondition The client is notified of the erase event.
      *
      * @public
      */
     cellErase: function() {
       this.execute( new CommandCellUpdate( this, '' ) );
-    },
-    /**
-     * Clears the active cell's contents without notifying clients.
-     */
-    cellClear: function() {
-      let plugin = this;
-      $(plugin.getTableCell()).text( '' );
     },
     /**
      * Creates an input field at the active table cell.
@@ -710,14 +718,14 @@
      * Enables cell editing for the active table cell, so long as the cell
      * is not marked as read-only.
      *
-     * @param {boolean} clear Set to true to first erase the field.
+     * @param {string} charCode Set the initial value to this character.
      * @public
      */
-    cellEditStart: function( clear ) {
+    cellEditStart: function( charCode ) {
       let plugin = this;
 
       if( !plugin.isActiveCellReadOnly() ) {
-        plugin.execute( new CommandCellEditStart( plugin, clear ) );
+        plugin.execute( new CommandCellEditStart( plugin, charCode ) );
       }
     },
     /**
@@ -751,6 +759,24 @@
       return edit;
     },
     /**
+     * Called when a new value is applied to the active cell.
+     *
+     * @postcondition The client callback onCellValueChanged is called.
+     * @postcondition The cell value at the given row and column is changed
+     * to the result from the callback (default is the given cell value).
+     *
+     * @param {string} cellValue The new active cell value.
+     * @param {number} row The row for the value to change.
+     * @param {number} col The columns for the value to change.
+     * @public
+     */
+    setCellValue: function( cellValue, row, col ) {
+      let plugin = this;
+      cellValue = plugin.settings.onCellValueChange( cellValue, row, col );
+
+      $(this.getCellValue( row, col )).text( cellValue );
+    },
+    /**
      * Changes the active cell value to the given value.
      *
      * @param {string} cellValue The new active cell value.
@@ -763,18 +789,16 @@
       plugin.setCellValue( cellValue, row, col );
     },
     /**
-     * Called when a new value is applied to the active cell.
+     * Sets the active cell's contents without notifying clients.
      *
-     * @param {string} cellValue The new active cell value.
-     * @param {number} row The row for the value to change.
-     * @param {number} col The columns for the value to change.
-     * @public
+     * @param {string} s The new active cell value.
+     * @protected
      */
-    setCellValue: function( cellValue, row, col ) {
-      let plugin = this;
-      cellValue = plugin.settings.onCellValueChange( cellValue, row, col );
-
-      $(this.getTableCell()).text( cellValue );
+    setActiveCellValueSilent: function( s ) {
+      if( s !== false ) {
+        let plugin = this;
+        $(plugin.getTableCell()).text( s );
+      }
     },
     /**
      * Reverts any edits to their previous value; if there are no edits in
@@ -1001,12 +1025,10 @@
    * prior to injecting an input field.
    */
   class CommandCellEditStart extends Command {
-    constructor( plugin, clear ) {
+    constructor( plugin, charCode ) {
       super( plugin );
 
-      if( clear ) {
-        plugin.cellClear();
-      }
+      plugin.setActiveCellValueSilent( charCode );
     }
 
     execute() {
