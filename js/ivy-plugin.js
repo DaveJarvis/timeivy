@@ -30,7 +30,7 @@
     classCellReadOnly:    'readonly',
     maxPageSize: 30,
     maxUndoLevels: 1000,
-    modeNavigate: [
+    dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
       { k: 'down',         f: 'navigateDown' },
@@ -55,7 +55,6 @@
       { k: 'del',          f: 'cellErase' },
 
       { k: 'f2',           f: 'cellEditStart' },
-      { k: 'esc',          f: 'cellEditCancel' },
 
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
@@ -68,10 +67,14 @@
       { k: 'ctrl+y',       f: 'editRedo' },
       { k: 'command+y',    f: 'editRedo' },
     ],
-    modeEdit: [
+    dispatchKeysEdit: [
       { k: 'up',           f: 'navigateUp' },
       { k: 'down',         f: 'navigateDown' },
+      { k: 'shift+tab',    f: 'navigateLeft' },
+      { k: 'tab',          f: 'navigateRight' },
+
       { k: 'enter',        f: 'cellEditStop' },
+      { k: 'esc',          f: 'cellEditCancel' },
     ],
     /**
      * Called when the active cell value changes.
@@ -186,17 +189,53 @@
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
 
-      $table.keypress( function( e ) {
+      console.log( 'bind printable keys' );
+
+      $table.on( 'keypress', function( e ) {
         // If the character code is numeric, it is a non-printable char.
         var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
 
         // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
         if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
           console.log( 'KEYPRESS!' );
-          //Mousetrap.reset();
-          //plugin.cellEditStart();
+          plugin.cellErase();
+          plugin.cellEditStart();
         }
       } );
+    },
+    /**
+     * Start cell editing when a printable character is typed.
+     *
+     * @protected
+     */
+    unbindPrintableKeys: function() {
+      let plugin = this;
+      let $table = $(plugin.getTableBodyElement());
+
+      console.log( 'unbind printable keys' );
+
+      $table.off( 'keypress' );
+    },
+    /**
+     * Resets the key bindings and injects a new mapping.
+     *
+     * @param {array} keymap The list of keyboard events to bind.
+     */
+    _bindDispatchKeys: function( keymap ) {
+      Mousetrap.reset();
+
+      let plugin = this;
+
+      // Apply configurable keyboard bindings.
+      for( let i = 0; i < keymap.length; i++ ) {
+        let k = keymap[i].k;
+        let f = keymap[i].f;
+
+        Mousetrap.bind( k, function( e ) {
+          // Call the mapped function by its string name.
+          plugin[ f ]();
+        } );
+      }
     },
     /**
      * Binds the keyboard to cell model navigation.
@@ -204,21 +243,17 @@
      * @protected
      */
     bindNavigateMode: function() {
-      Mousetrap.reset();
-
       let plugin = this;
-      let nav = this.settings.modeNavigate;
-
-      // Apply configurable keyboard bindings.
-      for( let i = 0; i < nav.length; i++ ) {
-        let k = nav[i].k;
-        let f = nav[i].f;
-
-        Mousetrap.bind( k, function( e ) {
-          // Call the mapped function by name, indirectly.
-          plugin[ f ]();
-        } );
-      }
+      plugin._bindDispatchKeys( this.settings.dispatchKeysNavigate );
+    },
+    /**
+     * Binds the keyboard to cell edits.
+     *
+     * @protected
+     */
+    bindEditMode: function() {
+      let plugin = this;
+      plugin._bindDispatchKeys( this.settings.dispatchKeysEdit );
     },
     /**
      * Binds paste events to replace cell content.
@@ -417,7 +452,7 @@
     /**
      * Navigates to the given row and column without storing the command
      * in the undo/redo history.
-     * 
+     *
      * @param {number} row The new row number for the active cell.
      * @param {number} col The new column number for the active cell.
      *
@@ -701,12 +736,15 @@
 
         $tableCell.removeClass( plugin.settings.classActiveCellInput );
 
-        let row = this.getCellRow();
-        let col = this.getCellCol();
+        let row = plugin.getCellRow();
+        let col = plugin.getCellCol();
 
-        cellValue = this.settings.onCellValueChange( cellValue, row, col );
-        this.setCellValue( cellValue );
-        this.focus();
+        cellValue = plugin.settings.onCellValueChange( cellValue, row, col );
+        plugin.setCellValue( cellValue );
+        plugin.focus();
+
+        plugin.bindNavigateMode();
+        plugin.bindPrintableKeys();
 
         edit = true;
       }
@@ -815,7 +853,7 @@
     execute( command ) {
       command.execute();
       let stack = this.getUndoStack();
-      let previous = stack.peek(); 
+      let previous = stack.peek();
 
       if( !command.equals( previous ) ) {
         stack.push( command );
@@ -890,7 +928,7 @@
     /**
      * Restore's the previously saved cell state.
      */
-    undo() { 
+    undo() {
       this.getPlugin().cellStateRestore( this.getState() );
     }
 
@@ -950,15 +988,18 @@
     constructor( plugin, cellValue ) {
       super( plugin );
     }
-      
+
     execute() {
       let plugin = this.getPlugin();
+      plugin.bindEditMode();
+      plugin.unbindPrintableKeys();
+
       let $tableCell = $(plugin.getTableCell());
       let $input = plugin.cellInputCreate( $tableCell );
       plugin.setCellInput( $input );
 
       $input.on( 'focusout', function() {
-        plugin.setCellValue( $input.val() );
+        plugin.cellEditStop();
       });
 
       $tableCell.html( $input );
@@ -998,7 +1039,7 @@
 
       // Uniquely identify the row so that multiple clones of the same row
       // will result in different states, and thereby join the undo stack.
-      this.setState( { id: (new Date()).getTime(), clone: $clone } );
+      this.setState( { id: this.getId(), clone: $clone } );
       $row.after( $clone );
 
       plugin.activate();
@@ -1007,8 +1048,15 @@
     /**
      * Removes the row that was previously inserted.
      */
-    undo() { 
+    undo() {
       this.getState().clone.remove();
+    }
+
+    /**
+     * Returns a unique identifier for the command's state.
+     */
+    getId() {
+      return (new Date()).getTime();
     }
   }
 
@@ -1044,4 +1092,3 @@ Object.equals = function( x, y ) {
 
   return true;
 };
-
