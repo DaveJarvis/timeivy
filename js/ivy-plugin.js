@@ -127,7 +127,7 @@
       // Allow click (mouse, tap, etc.) navigation.
       this.bindNavigationClicks();
 
-      // Handle paste events.
+      // Trap pasting into the browser.
       this.bindPasteHandler();
 
       // Highlight the default cell location.
@@ -214,6 +214,7 @@
      * Resets the key bindings and injects a new mapping.
      *
      * @param {array} keymap The list of keyboard events to bind.
+     * @private
      */
     _bindDispatchKeys: function( keymap ) {
       Mousetrap.reset();
@@ -275,7 +276,6 @@
      * @param {number} i The row or column index to sanitize.
      * @param {number} max The maximum extent allowed for the index value.
      * @return {number} Sanitized cell index number.
-     *
      * @private
      */
     sanitizeCellIndex: function( i, max ) {
@@ -285,7 +285,6 @@
      * Primitive to get the active cell row from the model.
      *
      * @return {number} The active cell row, 0-based.
-     *
      * @public
      */
     getCellRow: function() {
@@ -295,7 +294,6 @@
      * Primitive to get the active cell column from the model.
      *
      * @return {number} The active cell column, 0-based.
-     *
      * @public
      */
     getCellCol: function() {
@@ -305,7 +303,6 @@
      * Primitive to get the table body via jQuery.
      *
      * @return {object} An element that represents the tbody containing cells.
-     *
      * @public
      */
     getTableBodyElement: function() {
@@ -316,7 +313,6 @@
      * using jQuery as $(this.getTableCell()).
      *
      * @return {object} This returns a td element that can be styled.
-     *
      * @public
      */
     getTableCell: function() {
@@ -418,7 +414,7 @@
      */
     cellStateRestore: function( state ) {
       this._navigate( state.cellRow, state.cellCol );
-      this.setCellValue( state.cellValue );
+      this.setActiveCellValue( state.cellValue );
     },
     /**
      * @private
@@ -439,6 +435,8 @@
      * Ensure that the document body retains focus. This has the side
      * effect that when the table is loaded, the user can start typing
      * immediately.
+     *
+     * @public
      */
     focus: function() {
       $(this.getTableBodyElement()).focus();
@@ -475,7 +473,6 @@
      * @postcondition The cell at (row, col) is activated.
      * @postcondition The undo buffer includes this navigate command.
      * @postcondition The table body has input focus.
-     *
      * @public
      */
     navigate: function( row, col ) {
@@ -487,7 +484,6 @@
      * column.
      *
      * @param {number} skip The number of cells to move.
-     *
      * @protected
      */
     navigateRow: function( skip ) {
@@ -498,7 +494,6 @@
      * row.
      *
      * @param {number} skip The number of cells to move.
-     *
      * @protected
      */
     navigateCol: function( skip ) {
@@ -639,10 +634,21 @@
     /**
      * Erases the active cell's contents.
      *
+     * @postcondition The update operation is added to the stack.
+     * @postcondition The active cell is empty.
+     * @postcondition The client is notified of the clear event.
+     *
      * @public
      */
     cellErase: function() {
       this.execute( new CommandCellUpdate( this, '' ) );
+    },
+    /**
+     * Clears the active cell's contents without notifying clients.
+     */
+    cellClear: function() {
+      let plugin = this;
+      $(plugin.getTableCell()).text( '' );
     },
     /**
      * Creates an input field at the active table cell.
@@ -704,14 +710,14 @@
      * Enables cell editing for the active table cell, so long as the cell
      * is not marked as read-only.
      *
-     * @param {boolean} erase Set to true to first erase the field.
+     * @param {boolean} clear Set to true to first erase the field.
      * @public
      */
-    cellEditStart: function( erase ) {
+    cellEditStart: function( clear ) {
       let plugin = this;
 
       if( !plugin.isActiveCellReadOnly() ) {
-        plugin.execute( new CommandCellEditStart( plugin, erase ) );
+        plugin.execute( new CommandCellEditStart( plugin, clear ) );
       }
     },
     /**
@@ -733,11 +739,7 @@
 
         $tableCell.removeClass( plugin.settings.classActiveCellInput );
 
-        let row = plugin.getCellRow();
-        let col = plugin.getCellCol();
-
-        cellValue = plugin.settings.onCellValueChange( cellValue, row, col );
-        plugin.setCellValue( cellValue );
+        plugin.setActiveCellValue( cellValue );
         plugin.focus();
 
         plugin.bindNavigateMode();
@@ -749,12 +751,29 @@
       return edit;
     },
     /**
+     * Changes the active cell value to the given value.
+     *
+     * @param {string} cellValue The new active cell value.
+     */
+    setActiveCellValue: function( cellValue ) {
+      let plugin = this;
+      let row = plugin.getCellRow();
+      let col = plugin.getCellCol();
+
+      plugin.setCellValue( cellValue, row, col );
+    },
+    /**
      * Called when a new value is applied to the active cell.
      *
      * @param {string} cellValue The new active cell value.
+     * @param {number} row The row for the value to change.
+     * @param {number} col The columns for the value to change.
      * @public
      */
-    setCellValue: function( cellValue ) {
+    setCellValue: function( cellValue, row, col ) {
+      let plugin = this;
+      cellValue = plugin.settings.onCellValueChange( cellValue, row, col );
+
       $(this.getTableCell()).text( cellValue );
     },
     /**
@@ -982,11 +1001,11 @@
    * prior to injecting an input field.
    */
   class CommandCellEditStart extends Command {
-    constructor( plugin, erase ) {
+    constructor( plugin, clear ) {
       super( plugin );
 
-      if( erase ) {
-        plugin.setCellValue( '' );
+      if( clear ) {
+        plugin.cellClear();
       }
     }
 
@@ -1019,7 +1038,7 @@
 
     execute() {
       let plugin = this.getPlugin();
-      plugin.setCellValue( this._cellValue );
+      plugin.setActiveCellValue( this._cellValue );
     }
   }
 
@@ -1057,7 +1076,7 @@
      * Returns a unique identifier for the command's state.
      */
     getId() {
-      return (new Date()).getTime() + Math.random();
+      return (new Date()).getTime();
     }
   }
 

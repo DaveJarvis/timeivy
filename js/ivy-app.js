@@ -8,10 +8,11 @@ $(document).ready( function() {
     onCellValueChange: function( cellValue, row, col ) {
       if( col === 1 || col === 2 ) {
         cellValue = cellValue.toTime();
+
+        console.dir( this );
       }
 
       return cellValue;
     }
   });
 } );
-
