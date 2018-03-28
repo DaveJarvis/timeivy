@@ -30,7 +30,6 @@
     classCellReadOnly:    'readonly',
     maxPageSize:          30,
     maxUndoLevels:        1000,
-    formatTime:           'HH:mm a',
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
@@ -60,6 +59,7 @@
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
       { k: 'command+i',    f: 'editInsertRow' },
+      { k: 'ctrl+del',     f: 'editDeleteRow' },
 
       { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
@@ -78,6 +78,12 @@
       { k: 'esc',          f: 'cellEditCancel' },
     ],
     /**
+     * Called immediately after the plugin is loaded, but before users can
+     * edit the data.
+     */
+    onInit: function() {
+    },
+    /**
      * Called immediately before the active cell value changes.
      *
      * @param {string} cellValue The value for the new cell.
@@ -95,6 +101,14 @@
      * @param {number} col The cellValue column that has changed.
      */
     onCellValueChangeAfter: function( row, col ) {
+    },
+    /**
+     * Called immediately after the given row and column cell value changes.
+     *
+     * @param {object} $row The row used as the template for the clone.
+     * @param {object} $clone The clone inserted after the given row.
+     */
+    onRowInsertAfter: function( $row, $clone ) {
     }
   };
 
@@ -126,6 +140,9 @@
      * @protected
      */
     init: function() {
+      // Provide an initialization hook.
+      this.settings.onInit();
+
       // Prevent keys from bubbling to the browser container.
       this.setup();
 
@@ -326,14 +343,14 @@
      * @return {object} This returns a td element that can be styled.
      * @public
      */
-    getTableCell: function() {
+    getActiveCell: function() {
       let row = this.getCellRow();
       let col = this.getCellCol();
 
-      return this.getCellValue( row, col );
+      return this.getCell( row, col );
     },
     /**
-     * Primitive to get the cell value at the given row and column. The row
+     * Primitive to get the table cell at the given row and column. The row
      * and column values must be sanitized prior to calling.
      *
      * @param {number} row The cell value's row to retrieve.
@@ -341,7 +358,7 @@
      * @return {string} The cell value at the given row and column.
      * @public
      */
-    getCellValue: function( row, col ) {
+    getCell: function( row, col ) {
       let plugin = this;
       let table = this.getTableBodyElement();
 
@@ -410,7 +427,7 @@
      * @return {boolean} True means the active cell has a read-only class.
      */
     isActiveCellReadOnly: function() {
-      return $(this.getTableCell()).hasClass( this.settings.classCellReadOnly );
+      return $(this.getActiveCell()).hasClass( this.settings.classCellReadOnly );
     },
     /**
      * Primitive to add the active class to the table cell represented by
@@ -420,7 +437,7 @@
      * @protected
      */
     activate: function() {
-      $(this.getTableCell()).addClass( this.settings.classActiveCell );
+      $(this.getActiveCell()).addClass( this.settings.classActiveCell );
     },
     /**
      * Primitive to remove the active class from the table cell represented by
@@ -430,7 +447,7 @@
      * @protected
      */
     deactivate: function() {
-      $(this.getTableCell()).removeClass( this.settings.classActiveCell );
+      $(this.getActiveCell()).removeClass( this.settings.classActiveCell );
     },
     /**
      * Returns the state of the plugin, which can be restored using the
@@ -443,7 +460,7 @@
       let result = {
         cellRow: this.getCellRow(),
         cellCol: this.getCellCol(),
-        cellValue: $(this.getTableCell()).text()
+        cellValue: $(this.getActiveCell()).text()
       };
 
       return result;
@@ -666,7 +683,7 @@
     cellCopy: function() {
       let $temp = $('<input>');
       $('body').append( $temp );
-      $temp.val( $(this.getTableCell()).text() ).select();
+      $temp.val( $(this.getActiveCell()).text() ).select();
       document.execCommand( 'copy' );
       $temp.remove();
     },
@@ -781,7 +798,7 @@
       if( $input !== false ) {
         let plugin = this;
         let cellValue = plugin.cellInputDestroy();
-        let $tableCell = $(plugin.getTableCell());
+        let $tableCell = $(plugin.getActiveCell());
 
         $tableCell.removeClass( plugin.settings.classActiveCellInput );
 
@@ -811,7 +828,7 @@
       let plugin = this;
 
       v = plugin.settings.onCellValueChangeBefore( v, row, col );
-      $(this.getCellValue( row, col )).text( v );
+      $(this.getCell( row, col )).text( v );
       plugin.settings.onCellValueChangeAfter( row, col );
     },
     /**
@@ -829,13 +846,13 @@
     /**
      * Sets the active cell's contents without notifying clients.
      *
-     * @param {string} s The new active cell value.
+     * @param {string} v The new active cell value.
      * @protected
      */
-    setActiveCellValueSilent: function( s ) {
-      if( s !== false ) {
+    setActiveCellValueSilent: function( v ) {
+      if( v !== false ) {
         let plugin = this;
-        $(plugin.getTableCell()).text( s );
+        $(plugin.getActiveCell()).text( v );
       }
     },
     /**
@@ -863,6 +880,14 @@
      */
     editInsertRow: function() {
       this.execute( new CommandInsertRow( this ) );
+    },
+    /**
+     * Removes the existing row for the active cell row.
+     *
+     * @public
+     */
+    editDeleteRow: function() {
+      this.execute( new CommandDeleteRow( this ) );
     },
     /**
      * Un-executes the previously executed command.
@@ -1074,7 +1099,7 @@
       plugin.bindEditMode();
       plugin.unbindPrintableKeys();
 
-      let $tableCell = $(plugin.getTableCell());
+      let $tableCell = $(plugin.getActiveCell());
       let $input = plugin.cellInputCreate( $tableCell );
       plugin.setCellInput( $input );
 
@@ -1114,7 +1139,7 @@
       let plugin = this.getPlugin();
       plugin.deactivate();
 
-      let $row = $(plugin.getTableCell()).closest( 'tr' );
+      let $row = $(plugin.getActiveCell()).closest( 'tr' );
       let $clone = $row.clone();
 
       // Uniquely identify the row so that multiple clones of the same row
@@ -1122,6 +1147,7 @@
       this.setState( { id: this.getId(), clone: $clone } );
       $row.after( $clone );
 
+      plugin.settings.onRowInsertAfter( $row, $clone );
       plugin.activate();
     }
 
@@ -1137,6 +1163,16 @@
      */
     getId() {
       return (new Date()).getTime();
+    }
+  }
+
+  class CommandDeleteRow extends Command {
+    constructor( plugin ) {
+      super( plugin );
+    }
+
+    execute() {
+      console.log( 'delete row' );
     }
   }
 
