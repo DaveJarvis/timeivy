@@ -5,15 +5,21 @@
  */
 $(document).ready( function() {
   $('#ivy tbody').ivy({
-    onCellValueChange: function( cellValue, row, col ) {
+    onCellValueChangeBefore: function( cellValue, row, col ) {
       if( col === 1 || col === 2 ) {
         cellValue = cellValue.toTime();
+      }
 
-        let timeBegan = cellValue;
+      return cellValue;
+    },
+    onCellValueChangeAfter: function( row, col ) {
+      if( col === 1 || col === 2 ) {
+        let timeBegan = $(this.ivy.getCellValue( row, 1 )).text();
         let timeEnded = $(this.ivy.getCellValue( row, 2 )).text();
+        let TIME_FORMAT = this.ivy.settings.formatTime;
 
-        let began = moment.utc( timeBegan, 'HH:mm a' );
-        let ended = moment.utc( timeEnded, 'HH:mm a' );
+        let began = moment.utc( timeBegan, TIME_FORMAT );
+        let ended = moment.utc( timeEnded, TIME_FORMAT );
 
         let delta = moment.duration( ended.diff( began ) );
         let hours = delta.asHours();
@@ -22,10 +28,24 @@ $(document).ready( function() {
           hours = Math.abs( hours ).toFixed( 2 );
         }
 
+        // Careful that this doesn't go recursive.
         this.ivy.setCellValue( hours, row, 3 );
+
+        let sumStartRow = this.findGroup( row, 0, -1 );
       }
 
-      return cellValue;
+      // Sum shift times within the same day.
+    },
+    /**
+     * Returns the first and last row for a consecutive series of equal values.
+     */
+    findGroup: function( row, col, direction ) {
+      let currVal = null;
+      let prevVal = null;
+
+      return row;
+    },
+    sum: function( row ) {
     }
   });
 } );

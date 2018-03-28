@@ -28,8 +28,9 @@
     classActiveCell:      'active',
     classActiveCellInput: 'edit',
     classCellReadOnly:    'readonly',
-    maxPageSize: 30,
-    maxUndoLevels: 1000,
+    maxPageSize:          30,
+    maxUndoLevels:        1000,
+    formatTime:           'HH:mm a',
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
@@ -77,14 +78,23 @@
       { k: 'esc',          f: 'cellEditCancel' },
     ],
     /**
-     * Called when the active cell value changes.
+     * Called immediately before the active cell value changes.
      *
      * @param {string} cellValue The value for the new cell.
      * @param {number} row The cellValue row that has changed.
      * @param {number} col The cellValue column that has changed.
+     * @return {string} Value to set at row and column.
      */
-    onCellValueChange: function( cellValue, row, col ) {
+    onCellValueChangeBefore: function( cellValue, row, col ) {
       return cellValue;
+    },
+    /**
+     * Called immediately after the given row and column cell value changes.
+     *
+     * @param {number} row The cellValue row that has changed.
+     * @param {number} col The cellValue column that has changed.
+     */
+    onCellValueChangeAfter: function( row, col ) {
     }
   };
 
@@ -262,7 +272,7 @@
       $(document).on( 'paste', function( e ) {
         if( e.originalEvent ) {
           let buffer = e.originalEvent.clipboardData.getData('text');
-          plugin.execute( new CommandCellUpdate( plugin, buffer ) );
+          plugin.cellUpdate( buffer );
 
           e.stopPropagation();
           e.preventDefault();
@@ -347,10 +357,7 @@
      * @protected
      */
     setCellRow: function( row ) {
-      let table = this.getTableBodyElement();
-      let max = table.rows.length - 1;
-
-      this._cell[0] = this.sanitizeCellIndex( row, max );
+      this._cell[0] = this.sanitizeCellIndex( row, this.getMaxRows() );
     },
     /**
      * Primitive to change the cell column without updating the user interface.
@@ -362,11 +369,31 @@
      * @protected
      */
     setCellCol: function( col ) {
+      this._cell[1] = this.sanitizeCellIndex( col, this.getMaxCols() );
+    },
+    /**
+     * Primitive that returns the maximum number of table rows.
+     *
+     * @return {number} The last row index, 0-based.
+     * @public
+     */
+    getMaxRows: function() {
       let table = this.getTableBodyElement();
-      let row = this.getCellRow();
-      let max = table.rows[ row ].cells.length - 1;
+      let max = table.rows.length - 1;
 
-      this._cell[1] = this.sanitizeCellIndex( col, max );
+      return max;
+    },
+    /**
+     * Primitive that returns the maximum number of table columns.
+     *
+     * @return {number} The last column index, 0-based.
+     * @public
+     */
+    getMaxCols: function() {
+      let table = this.getTableBodyElement();
+      let max = table.rows[ MIN_INDEX ].cells.length - 1;
+
+      return max;
     },
     isActiveCell: function( row, col ) {
       return this.isActiveCellRow( row ) && this.isActiveCellCol( col );
@@ -462,11 +489,9 @@
      *
      * @param {number} row The new row number for the active cell.
      * @param {number} col The new column number for the active cell.
-     *
      * @postcondition The previously activated cell is deactivated.
      * @postcondition The cell at (row, col) is activated.
      * @postcondition The table body has input focus.
-     *
      * @private
      */
     _navigate: function( row, col ) {
@@ -482,7 +507,6 @@
      *
      * @param {number} row The new row number for the active cell.
      * @param {number} col The new column number for the active cell.
-     *
      * @postcondition Cell editing has stopped.
      * @postcondition The previously activated cell is deactivated.
      * @postcondition The cell at (row, col) is activated.
@@ -652,11 +676,25 @@
      * @postcondition The update operation is added to the stack.
      * @postcondition The active cell is empty.
      * @postcondition The client is notified of the erase event.
-     *
      * @public
      */
     cellErase: function() {
-      this.execute( new CommandCellUpdate( this, '' ) );
+      this.cellUpdate( '' );
+    },
+    /**
+     * Sets the active cell's contents so long as the cell is not read-only.
+     *
+     * @precondition The active cell is not read-only. 
+     * @postcondition The active cell value is changed (if not read-only).
+     * @param {string} cellValue The new cell value.
+     * @public
+     */
+    cellUpdate: function( cellValue ) {
+      let plugin = this;
+
+      if( !plugin.isActiveCellReadOnly() ) {
+        plugin.execute( new CommandCellUpdate( this, cellValue ) );
+      }
     },
     /**
      * Creates an input field at the active table cell.
@@ -764,17 +802,17 @@
      * @postcondition The client callback onCellValueChanged is called.
      * @postcondition The cell value at the given row and column is changed
      * to the result from the callback (default is the given cell value).
-     *
-     * @param {string} cellValue The new active cell value.
+     * @param {string} v The new active cell value.
      * @param {number} row The row for the value to change.
      * @param {number} col The columns for the value to change.
      * @public
      */
-    setCellValue: function( cellValue, row, col ) {
+    setCellValue: function( v, row, col ) {
       let plugin = this;
-      cellValue = plugin.settings.onCellValueChange( cellValue, row, col );
 
-      $(this.getCellValue( row, col )).text( cellValue );
+      v = plugin.settings.onCellValueChangeBefore( v, row, col );
+      $(this.getCellValue( row, col )).text( v );
+      plugin.settings.onCellValueChangeAfter( row, col );
     },
     /**
      * Changes the active cell value to the given value.
@@ -1134,3 +1172,4 @@ Object.equals = function( x, y ) {
 
   return true;
 };
+
