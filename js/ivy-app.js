@@ -30,8 +30,21 @@ $(document).ready( function() {
     },
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
-        let timeBegan = $(this.ivy.getCell( row, COL_BEGAN )).text();
-        let timeEnded = $(this.ivy.getCell( row, COL_ENDED )).text();
+        let cellTimeBegan = $(this.ivy.getCell( row, COL_BEGAN ));
+        let cellTimeEnded = $(this.ivy.getCell( row, COL_ENDED ));
+
+        let timeBegan = $(cellTimeBegan).text();
+        let timeEnded = $(cellTimeEnded).text();
+
+        if( timeBegan == '' ) {
+          timeBegan = timeBegan.toTime();
+          $(cellTimeBegan).text( timeBegan );
+        }
+
+        if( timeEnded == '' ) {
+          timeEnded = timeEnded.toTime();
+          $(cellTimeEnded).text( timeEnded );
+        }
 
         let began = moment.utc( timeBegan, FORMAT_TIME );
         let ended = moment.utc( timeEnded, FORMAT_TIME );
