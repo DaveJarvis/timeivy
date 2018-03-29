@@ -49,13 +49,11 @@
       { k: 'shift+tab',    f: 'navigateLeft' },
       { k: 'tab',          f: 'navigateRight' },
 
-      { k: 'ctrl+x',       f: 'cellCut' },
-      { k: 'ctrl+c',       f: 'cellCopy' },
-      { k: 'ctrl+ins',     f: 'cellCopy' },
-      { k: 'del',          f: 'cellErase' },
-
-      { k: 'f2',           f: 'cellEditStart' },
-
+      { k: 'f2',           f: 'editStart' },
+      { k: 'ctrl+x',       f: 'editCut' },
+      { k: 'ctrl+c',       f: 'editCopy' },
+      { k: 'ctrl+ins',     f: 'editCopy' },
+      { k: 'del',          f: 'editErase' },
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
       { k: 'command+i',    f: 'editInsertRow' },
@@ -74,8 +72,8 @@
       { k: 'shift+tab',    f: 'navigateLeft' },
       { k: 'tab',          f: 'navigateRight' },
 
-      { k: 'enter',        f: 'cellEditStop' },
-      { k: 'esc',          f: 'cellEditCancel' },
+      { k: 'enter',        f: 'editStop' },
+      { k: 'esc',          f: 'editCancel' },
     ],
     /**
      * Called immediately after the plugin is loaded, but before users can
@@ -109,6 +107,13 @@
      * @param {object} $clone The clone inserted after the given row.
      */
     onRowInsertAfter: function( $row, $clone ) {
+    },
+    /**
+     * Called immediately after the given row is deleted.
+     *
+     * @param {object} $row The row that was deleted.
+     */
+    onRowDeleteAfter: function( $row ) {
     }
   };
 
@@ -205,7 +210,7 @@
 
       $table.on( 'dblclick', 'td', function() {
         plugin.navigateTableCell( $(this) );
-        plugin.cellEditStart();
+        plugin.editStart();
       } );
     },
     /**
@@ -223,7 +228,7 @@
 
         // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
         if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
-          plugin.cellEditStart( String.fromCharCode( charCode ) );
+          plugin.editStart( String.fromCharCode( charCode ) );
         }
       } );
     },
@@ -532,7 +537,7 @@
      * @public
      */
     navigate: function( row, col ) {
-      this.cellEditStop();
+      this.editStop();
       this.execute( new CommandNavigate( this, row, col ) );
     },
     /**
@@ -672,7 +677,7 @@
      *
      * @public
      */
-    cellCut: function() {
+    editCut: function() {
       this.execute( new CommandCellCut( this ) );
     },
     /**
@@ -680,7 +685,7 @@
      *
      * @private
      */
-    cellCopy: function() {
+    editCopy: function() {
       let $temp = $('<input>');
       $('body').append( $temp );
       $temp.val( $(this.getActiveCell()).text() ).select();
@@ -695,7 +700,7 @@
      * @postcondition The client is notified of the erase event.
      * @public
      */
-    cellErase: function() {
+    editErase: function() {
       this.cellUpdate( '' );
     },
     /**
@@ -776,7 +781,7 @@
      * @param {string} charCode Set the initial value to this character.
      * @public
      */
-    cellEditStart: function( charCode ) {
+    editStart: function( charCode ) {
       let plugin = this;
 
       if( !plugin.isActiveCellReadOnly() ) {
@@ -791,7 +796,7 @@
      * @return {boolean} False means the cell was not being edited.
      * @public
      */
-    cellEditStop: function() {
+    editStop: function() {
       let $input = this.getCellInput();
       let edit = false;
 
@@ -861,9 +866,9 @@
      *
      * @protected
      */
-    cellEditCancel: function() {
+    editCancel: function() {
       // Prevent multiple undo actions from consecutive Esc key presses.
-      if( this.cellEditStop() ) {
+      if( this.editStop() ) {
         this.editUndo();
       }
     },
@@ -1036,6 +1041,13 @@
     }
 
     /**
+     * Returns a unique identifier for the command's state.
+     */
+    getId() {
+      return (new Date()).getTime();
+    }
+
+    /**
      * Stashes the plugin's state so that undo can be called upon it later.
      */
     saveState() {
@@ -1078,8 +1090,8 @@
     constructor( plugin ) { super( plugin ); }
     execute() {
       let plugin = this.getPlugin();
-      plugin.cellCopy();
-      plugin.cellErase();
+      plugin.editCopy();
+      plugin.editErase();
     }
   }
 
@@ -1104,7 +1116,7 @@
       plugin.setCellInput( $input );
 
       $input.on( 'focusout', function() {
-        plugin.cellEditStop();
+        plugin.editStop();
       });
 
       $tableCell.html( $input );
@@ -1157,13 +1169,6 @@
     undo() {
       this.getState().clone.remove();
     }
-
-    /**
-     * Returns a unique identifier for the command's state.
-     */
-    getId() {
-      return (new Date()).getTime();
-    }
   }
 
   class CommandDeleteRow extends Command {
@@ -1172,7 +1177,24 @@
     }
 
     execute() {
-      console.log( 'delete row' );
+      let plugin = this.getPlugin();
+      plugin.deactivate();
+
+      let $row = $(plugin.getActiveCell()).closest( 'tr' );
+      this.setState( { id: this.getId(), row: $row } );
+
+      $row.remove();
+
+      plugin.settings.onRowDeleteAfter( $row );
+      plugin.activate();
+    }
+
+    /**
+     * Removes the row that was previously inserted.
+     */
+    undo() {
+      // Insert after the active cell.
+      //new CommandInsertRow( this.getPlugin() this.getState().row;
     }
   }
 

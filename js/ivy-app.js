@@ -5,7 +5,7 @@
  */
 $(document).ready( function() {
   /** @const */
-  const FORMAT_TIME = 'HH:mm a';
+  const FORMAT_TIME = 'hh:mm A';
   /** @const */
   const FORMAT_PREC = 2;
   /** @const */
@@ -18,8 +18,15 @@ $(document).ready( function() {
   const COL_TOTAL = 4;
 
   $('#ivy tbody').ivy({
+    /**
+     * Calculates shifts and totals for each day.
+     */
     onInit: function() {
       let MAX_ROWS = this.ivy.getMaxRows();
+
+      for( let row = 0; row <= MAX_ROWS; row++ ) {
+        this.onCellValueChangeAfter( row, COL_BEGAN );
+      }
     },
     onCellValueChangeBefore: function( cellValue, row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
@@ -30,24 +37,8 @@ $(document).ready( function() {
     },
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
-        let cellTimeBegan = $(this.ivy.getCell( row, COL_BEGAN ));
-        let cellTimeEnded = $(this.ivy.getCell( row, COL_ENDED ));
-
-        let timeBegan = $(cellTimeBegan).text();
-        let timeEnded = $(cellTimeEnded).text();
-
-        if( timeBegan == '' ) {
-          timeBegan = timeBegan.toTime();
-          $(cellTimeBegan).text( timeBegan );
-        }
-
-        if( timeEnded == '' ) {
-          timeEnded = timeEnded.toTime();
-          $(cellTimeEnded).text( timeEnded );
-        }
-
-        let began = moment.utc( timeBegan, FORMAT_TIME );
-        let ended = moment.utc( timeEnded, FORMAT_TIME );
+        let began = this.updateCellTime( row, COL_BEGAN );
+        let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
 
         let delta = moment.duration( ended.diff( began ) );
         let hours = delta.asHours();
@@ -60,16 +51,7 @@ $(document).ready( function() {
         $(this.ivy.getCell( row, COL_SHIFT )).text( hours );
 
         let indexes = this.findConsecutive( row, 0 );
-        let sum = 0;
-
-        // Sum shift times within the same day.
-        for( let i = indexes[0]; i <= indexes[1]; i++ ) {
-          sum += parseFloat( $(this.ivy.getCell( i, COL_SHIFT )).text(), 10 );
-        }
-
-        if( sum.toFixed ) {
-          sum = sum.toFixed( FORMAT_PREC );
-        }
+        let sum = this.sumConsecutive( indexes );
 
         // Set the total for the day.
         $(this.ivy.getCell( indexes[0], COL_TOTAL )).text( sum );
@@ -78,6 +60,27 @@ $(document).ready( function() {
     onRowInsertAfter: function( $row, $clone ) {
       // Only insert for the same day.
       $clone.find( 'td:not(:first-child)' ).empty();
+    },
+    /**
+     * Called to ensure the cell at the given row and column has a valid
+     * time.
+     *
+     * @param {number} row The cell row to update.
+     * @param {number} col The cell column to update.
+     * @return {object} The moment object for the time at the given cell.
+     */
+    updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
+			let cellTime = $(this.ivy.getCell( row, col ));
+			let time = $(cellTime).text();
+
+			if( time == '' ) {
+        // Clone because moments are mutable.
+				time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
+        time = time.format( FORMAT_TIME );
+				$(cellTime).text( time );
+			}
+
+			return moment.utc( time, FORMAT_TIME );
     },
     /**
      * Returns the first and last row for a consecutive series of equal values.
@@ -107,8 +110,20 @@ $(document).ready( function() {
 
       return [ beginIndex, endedIndex ];
     },
-    sum: function( row ) {
-    }
+    sumConsecutive: function( indexes ) {
+      let sum = 0;
+
+      // Sum shift times within the same day.
+      for( let i = indexes[0]; i <= indexes[1]; i++ ) {
+        sum += parseFloat( $(this.ivy.getCell( i, COL_SHIFT )).text(), 10 )||0;
+      }
+
+      if( sum.toFixed ) {
+        sum = sum.toFixed( FORMAT_PREC );
+      }
+
+      return sum;
+    },
   });
 } );
 

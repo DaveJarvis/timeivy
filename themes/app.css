@@ -3,3 +3,12 @@ body {
   font-size: 12px;
 }
 
+.container {
+  display: flex;
+  flex-direction: row;
+}
+
+aside {
+  padding-left: 24px;
+}
+

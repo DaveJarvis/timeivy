@@ -3,20 +3,9 @@
 }
 
 body {
-  font-family: 'Libre Baskerville', serif;
   color: #2e2e2e;
+  max-width: 800px;
   margin: 0 auto;
-}
-
-.page {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.section {
-  width: 100%;
-  justify-content: center;
-  align-items: center;
 }
 
 h1, h2, h3 {
@@ -32,41 +21,6 @@ h1 {
 
 h2 {
   font-size: 2em;
-}
-
-h3 {
-  font-size: 1.5em;
-}
-
-.illustration {
-	display: block;
-	margin: 0 auto;
-	text-align: center;
-}
-
-p {
-  line-height: 1.6em;
-}
-
-p.quote {
-  text-align: center;
-}
-
-q {
-  quotes: "“" "”" "“" "”";
-}
-
-q:before {
-  content: open-quote;
-}
-
-q:after {
-  content: close-quote;
-}
-
-a {
-  color: #6c984c;
-  text-decoration: none;
 }
 
 /* Mobile Styles */
