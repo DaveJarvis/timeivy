@@ -282,18 +282,21 @@
       <aside>
         <h3>Export</h3>
         <p>
-          <form>
-          <label for="rate">Rate ($/hr)</label>
-          <input type="text" name="rate" id="rate" value="30.00" maxlength="8" size="6" /><br /><br />
-          <button>Export</button>
+          <form action="invoice.png" method="get">
+          <label for="rate">Rate ($/hr):</label>
+          <span id="rate">30.00</span>
+          <br />
+          <label for="rate">Client:</label>
+          <span id="rate">The Jacksons'</span>
+          <br />
+          <button>Paper</button> or <button>Email</button>
           </form>
         </p>
-      </aside>
-      <aside>
         <h3>Help</h3>
         <p>
           Edit the time entries similar to editing a spreadsheet. Click
-          the <strong>Export</strong> button when finished. See also:
+          <strong>Paper</strong> or <strong>Email</strong> when finished.
+          See also:
         </p>
         <ul>
           <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/README.md">Hot keys</li>
