@@ -20,9 +20,6 @@
 </head>
 <body>
   <div class="page">
-    <header class="section header">
-      <h3>March, 2018</h3>
-    </header>
     <main class="section content container">
       <table id="ivy" class="ivy" cellspacing="0" cellpadding="0">
         <thead>
@@ -280,28 +277,39 @@
         </table>
       </table>
       <aside>
-        <h3>Export</h3>
+        <form action="invoice.png" method="get" class="smart-green">
+          <h1>Time Ivy
+            <span>...will grow on you.</span>
+          </h1>
+          <p>
+          <label>
+            <span>Invoice Month</span>
+            <input id="invoice_date" type="date" value="2018-03-01"/>
+          </label>
+          <label>
+            <span>Rate ($/hr):</span>
+            <input id="rate" type="number" min="0" step="0.01" value="30" />
+          </label>
+          <label>
+            <span>Client:</span>
+            <select name="client">
+              <option value="1">The Jacksons'</option>
+              <option value="2">The Smiths'</option>
+            </select>
+          </label>
+          <label>
+            <input type="submit" class="button" value="Paper"/>
+            <input type="submit" class="button" value="Email"/>
+          </label>
+          </p>
         <p>
-          <form action="invoice.png" method="get">
-          <label for="rate">Rate ($/hr):</label>
-          <span id="rate">30.00</span>
-          <br />
-          <label for="rate">Client:</label>
-          <span id="rate">The Jacksons'</span>
-          <br />
-          <button>Paper</button> or <button>Email</button>
-          </form>
-        </p>
-        <h3>Help</h3>
-        <p>
-          Edit the time entries similar to editing a spreadsheet. Click
-          <strong>Paper</strong> or <strong>Email</strong> when finished.
-          See also:
+          Edit the time entries similar to editing a spreadsheet. For help:
         </p>
         <ul>
           <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/README.md">Hot keys</li>
-          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/README.md">Time formats</li>
+          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md">Time formats</li>
         </ul>
+        </form>
       </aside>
     </main>
     <footer class="section footer"></footer>
