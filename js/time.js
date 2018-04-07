@@ -1,6 +1,16 @@
 "use strict";
 
 /**
+ * Answers true if the date instance is on a Saturday or Sunday.
+ *
+ * @return false This is a weekday.
+ */
+Date.prototype.isWeekend = function() {
+  let day = this.getDay();
+  return day == 0 || day == 6;
+}
+
+/**
  * Pads a string with the given string. This is used to zero-pad the starting
  * times.
  *

@@ -28,6 +28,10 @@ $(document).ready( function() {
         this.onCellValueChangeAfter( row, COL_BEGAN );
       }
     },
+    /**
+     * Called before a cell value is changed. This sets the cell value
+     * format to the standard time.
+     */
     onCellValueChangeBefore: function( cellValue, row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
         cellValue = cellValue.toTime();
@@ -35,6 +39,10 @@ $(document).ready( function() {
 
       return cellValue;
     },
+    /**
+     * Called after a cell value is changed. This computes the total number
+     * of hours worked in a day.
+     */
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
         let began = this.updateCellTime( row, COL_BEGAN );
@@ -57,6 +65,10 @@ $(document).ready( function() {
         $(this.ivy.getCell( indexes[0], COL_TOTAL )).text( sum );
       }
     },
+    /**
+     * Called after a row is inserted. This removes all values in the row
+     * except for the day of the month.
+     */
     onRowInsertAfter: function( $row, $clone ) {
       // Only insert for the same day.
       $clone.find( 'td:not(:first-child)' ).empty();
@@ -110,6 +122,10 @@ $(document).ready( function() {
 
       return [ beginIndex, endedIndex ];
     },
+    /**
+     * Given a start and end index, this computes the total number of hours
+     * over all shifts in each day.
+     */
     sumConsecutive: function( indexes ) {
       let sum = 0;
 

@@ -1171,6 +1171,9 @@
     }
   }
 
+  /**
+   * Deletes the active row.
+   */
   class CommandDeleteRow extends Command {
     constructor( plugin ) {
       super( plugin );
@@ -1194,6 +1197,7 @@
      */
     undo() {
       // Insert after the active cell.
+      console.log( 'delete row' );
       //new CommandInsertRow( this.getPlugin() this.getState().row;
     }
   }
