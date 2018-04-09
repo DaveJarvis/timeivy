@@ -18,6 +18,10 @@ a {
 	color: #6D942F;
 }
 
+p.contact {
+  text-align: center;
+}
+
 /** Hot key styles */
 kbd {
 	padding: 0.1em 0.6em;
@@ -36,51 +40,6 @@ kbd {
 	line-height: 1.4;
 	white-space: nowrap;
 }
-
-/*
-form.ivy {
-	float: left;
-	width: 330px;
-}
-form.ivy fieldset {
-	border: none;
-	padding: 20px;
-	margin: 10px 0;
-	background: #EAEAEA;
-}
-form.ivy label {
-	display: block;
-	float: left;
-	clear: left;
-	margin: 10px 0;
-	font-size: 14px;
-}
-form.ivy label b {
-	display: block;
-	float: left;
-	width: 80px;
-	margin-right: 20px;
-}
-form.ivy label input,
-form.ivy label textarea,
-form.ivy label select {
-	float: left;
-	font-size: 14px;
-	width: 180px;
-}
-form.ivy label input[type="radio"],
-form.ivy label input[type="checkbox"] {
-	width: 20px;
-}
-form.ivy p {
-	clear: left;
-	font-size: 14px;
-	margin: 10px 0 0;
-}
-form.ivy input[type="submit"] {
-	margin-left: 120px;
-}
-*/
 
 /** Form input */
 .smart-green {
@@ -153,7 +112,7 @@ form.ivy input[type="submit"] {
   -webkit-border-radius: 4px;
   -moz-border-border-radius: 4px;
   border: none;
-  padding: 10px 24px 10px 24px;
+  padding: 8px 12px 8px 12px;
   color: #FFF;
   text-shadow: 1px 1px 1px #949494;
 }

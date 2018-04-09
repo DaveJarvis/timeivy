@@ -276,13 +276,9 @@
           <label>
             <span>Client</span>
             <select name="client">
-              <option value="1">BC Ferries</option>
-              <option value="2">Ministry of Forests</option>
-              <option value="3">Alberta Health Systems</option>
-              <option value="4">ITI Canada</option>
-              <option value="5">World West Technologies</option>
-              <option value="6">Ministry of Justice</option>
-              <option value="7">Interface Communications</option>
+              <option value="1" selected="selected">The Jacksons'</option>
+              <option value="2">Wayne Manor</option>
+              <option value="3">Arbutus Fairgrounds</option>
             </select>
           </label>
           <label>
@@ -293,7 +289,6 @@
 							<option value="3">March</option>
 							<option value="4" selected="selected">April</option>
 							<option value="5">May</option>
-							<option value="6">...</option>
 							<option value="11">November</option>
 							<option value="12">December</option>
             </select>
@@ -303,79 +298,44 @@
 						<select name="invoice_year">
 							<option value="2007">2007</option>
 							<option value="2008">2008</option>
-							<option value="2017">...</option>
 							<option value="2018" selected="selected">2018</option>
 							<option value="2019">2019</option>
             </select>
           </label>
           <label>
-            <span>Rate ($/hr)</span>
-            <input id="rate" type="number" min="0" step="0.01" value="45" />
+            <span>Employee</span>
+						<select name="employee">
+							<option value="1">Abigail</option>
+							<option value="2">Brahm</option>
+							<option value="4" selected="selected">Yana</option>
+							<option value="5">Zachary</option>
+            </select>
+          </label>
+          <label>
+            <span>Employee Rate ($/hr)</span>
+            <input id="rate" type="number" min="0" step="0.01" value="40" />
           </label>
           <input id="update" name="update" type="submit" value="Update"/>
           <input id="preview" name="preview" type="submit" value="Preview"/>
-          <input id="email" name="email" type="submit" value="Send Invoice"/>
+          <input id="email" name="email" type="submit" value="Send"/>
+          <input id="export" name="export" type="submit" value="Export"/>
           </p>
           <p>
             Edit the time entries similar to editing a spreadsheet. For help:
           </p>
           <ul>
-            <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md">Time formats</a></li>
-            <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/HOTKEYS.md">Hot Keys</a></li>
+            <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md" target="_blank">Time formats</a></li>
+            <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/HOTKEYS.md" target="_blank">Hot Keys</a></li>
           </ul>
-
-          <h3>Hot Keys</h3>
-          <table border="0" cellpadding="2" cellspacing="2">
-          <tr>
-            <td><kbd>Ctrl+i</kbd></td>
-            <td>Add a shift using the current row's date</td>
-          </tr>
-          <tr>
-            <td><kbd>Delete</kbd></td>
-            <td>Delete the active cell's contents</td>
-          </tr>
-          <tr>
-            <td><kbd>F2</kbd></td>
-            <td>Enter edit mode for the active cell</td>
-          </tr>
-          <tr>
-            <td><kbd>Enter</kbd></td>
-            <td>Navigate one cell down</td>
-          </tr>
-          <tr>
-            <td><kbd>Page Up </kbd></td>
-            <td>Navigate one page up</td>
-          </tr>
-          <tr>
-            <td><kbd>Page Down</kbd></td>
-            <td>Navigate one page down</td>
-          </tr>
-          <tr>
-            <td><kbd>Home </kbd></td>
-            <td>Navigate to the current row's first column</td>
-          </tr>
-          <tr>
-            <td><kbd>End</kbd></td>
-            <td>Navigate to the current row's last column</td>
-          </tr>
-          <tr>
-            <td><kbd>Ctrl+Home</kbd></td>
-            <td>Navigate to the first row and first column</td>
-          </tr>
-          <tr>
-            <td><kbd>Ctrl+End</kbd></td>
-            <td>Navigate to the last row, and last column</td>
-          </tr>
-          <tr>
-            <td><kbd>Ctrl+z</kbd></td>
-            <td>Undo the previous action</td>
-          </tr>
-          <tr>
-            <td><kbd>Ctrl+Shift+z</kbd></td>
-            <td>Redo the previous undo action</td>
-          </tr>
-        </table>
         </form>
+				<p class="contact">
+          <a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy">
+          Contact me</a> with comments, questions, or beta testing interest.
+        </p>
+        <p class="contact">
+          Post feature requests and bug reports on the
+          <a href="https://github.com/DaveJarvis/timeivy/issues">issue tracker</a>.
+        </p>
       </aside>
     </main>
     <footer class="section footer"></footer>

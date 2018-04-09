@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="PostgreSQL" id="Project4383398" database="PostgreSQL" >
+	<schema name="public" catalogname="ivy" schemaname="public" defo="y" >
+		<table name="account" >
+			<comment>Reference to a user&#039;s account.</comment>
+			<column name="id" type="bigint" jt="-5" mandatory="y" />
+			<index name="pk_account" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="address" >
+			<column name="id" type="bigint" jt="-5" mandatory="y" />
+			<index name="pk_address" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="address_city" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="100" jt="12" mandatory="y" />
+			<column name="unlocode" type="varchar" jt="12" mandatory="y" >
+				<comment><![CDATA[Location code from http://www.jms-logistics.com/en/lookup/]]></comment>
+			</column>
+			<index name="pk_address_city" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="address_country" >
+			<column name="id" type="bigint" jt="-5" mandatory="y" />
+			<index name="pk_address_country" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="address_line" >
+			<column name="id" type="bigint" jt="-5" mandatory="y" />
+			<column name="address_id" type="bigint" length="100" jt="-5" mandatory="y" >
+				<comment><![CDATA[One of many address lines.]]></comment>
+			</column>
+			<index name="pk_address_line" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="idx_address_line" unique="NORMAL" >
+				<column name="address_id" />
+			</index>
+			<fk name="fk_address_line_address" to_schema="public" to_table="address" >
+				<fk_column name="address_id" pk="id" />
+			</fk>
+		</table>
+		<table name="address_postcode" >
+			<column name="id" type="bigint" jt="-5" mandatory="y" />
+			<index name="pk_address_postcode" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="address_region" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<index name="pk_address_region" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="employee" >
+			<comment>Reference to an employee.</comment>
+			<column name="id" type="bigint" jt="-5" mandatory="y" />
+			<index name="pk_employee" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+	</schema>
+	<connector name="PostgreSQL" database="PostgreSQL" driver_class="org.postgresql.Driver" driver_jar="postgresql-8.4-701.jdbc3.jar" host="localhost" port="5432" instance="ivy" user="ivy" passwd="cDBpczBvbml2eTEyMw==" schema_mapping="" />
+	<layout id="Layout4533884" name="Default" show_relation_columns="y" >
+		<entity schema="public" name="account" color="b2cdf7" x="45" y="45" />
+		<entity schema="public" name="employee" color="b2cdf7" x="45" y="135" />
+		<entity schema="public" name="address" color="b2cdf7" x="45" y="225" />
+		<entity schema="public" name="address_line" color="b2cdf7" x="210" y="225" />
+		<entity schema="public" name="address_city" color="b2cdf7" x="210" y="315" />
+		<entity schema="public" name="address_region" color="b2cdf7" x="210" y="420" />
+		<entity schema="public" name="address_country" color="b2cdf7" x="210" y="495" />
+		<entity schema="public" name="address_postcode" color="b2cdf7" x="210" y="570" />
+	</layout>
+</project>
