@@ -186,17 +186,18 @@
      * @public
      */
     navigateTableCell: function( $cell ) {
-      let col = $cell.parent().children().index($cell);
-      let row = $cell.parent().parent().children().index($cell.parent());
+      let col = $cell.parent().children().index( $cell );
+      let row = $cell.parent().parent().children().index( $cell.parent() );
 
-      // Navigating from the active cell to itself incurs undo issues.
+      // Navigating from the active cell to itself would undo issues,
+      // so ensure that the click navigation can be undone by filtering
+      // out clicks to the same cell.
       if( this.isActiveCell( row, col ) === false ) {
-        // Ensure that the click navigation can be undone.
         this.navigate( row, col );
       }
     },
     /**
-     * Binds single mouse clicks to navigation.
+     * Binds single and double mouse clicks to navigation.
      *
      * @protected
      */
@@ -233,7 +234,7 @@
       } );
     },
     /**
-     * Start cell editing when a printable character is typed.
+     * Stop cell editing when a printable character is typed.
      *
      * @protected
      */
