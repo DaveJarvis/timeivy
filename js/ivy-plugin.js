@@ -294,7 +294,7 @@
 
       $(document).on( 'paste', function( e ) {
         if( e.originalEvent ) {
-          let buffer = e.originalEvent.clipboardData.getData('text');
+          let buffer = e.originalEvent.clipboardData.getData( 'text' );
           plugin.cellUpdate( buffer );
 
           e.stopPropagation();
@@ -312,7 +312,7 @@
      * @return {number} Sanitized cell index number.
      * @private
      */
-    sanitizeCellIndex: function( i, max ) {
+    _sanitizeCellIndex: function( i, max ) {
       return i = i > max ? max : (i < MIN_INDEX ? MIN_INDEX : i);
     },
     /**
@@ -380,7 +380,7 @@
      * @protected
      */
     setCellRow: function( row ) {
-      this._cell[0] = this.sanitizeCellIndex( row, this.getMaxRows() );
+      this._cell[0] = this._sanitizeCellIndex( row, this.getMaxRows() );
     },
     /**
      * Primitive to change the cell column without updating the user interface.
@@ -392,7 +392,7 @@
      * @protected
      */
     setCellCol: function( col ) {
-      this._cell[1] = this.sanitizeCellIndex( col, this.getMaxCols() );
+      this._cell[1] = this._sanitizeCellIndex( col, this.getMaxCols() );
     },
     /**
      * Primitive that returns the maximum number of table rows.
@@ -801,6 +801,7 @@
       let $input = this.getCellInput();
       let edit = false;
 
+      // Ensure edit mode is engaged before disabling edit mode.
       if( $input !== false ) {
         let plugin = this;
         let cellValue = plugin.cellInputDestroy();
@@ -841,6 +842,7 @@
      * Changes the active cell value to the given value.
      *
      * @param {string} cellValue The new active cell value.
+     * @public
      */
     setActiveCellValue: function( cellValue ) {
       let plugin = this;

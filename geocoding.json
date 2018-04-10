@@ -1,0 +1,61 @@
+https://www.geocode.farm/v3/json/forward/?addr=1000+beverly+st+beverly+hills+90028+ca
+
+{
+    "geocoding_results": {
+        "LEGAL_COPYRIGHT": {
+            "copyright_notice": "Copyright (c) 2018 Geocode.Farm - All Rights Reserved.",
+            "copyright_logo": "https:\/\/www.geocode.farm\/images\/logo.png",
+            "terms_of_service": "https:\/\/www.geocode.farm\/policies\/terms-of-service\/",
+            "privacy_policy": "https:\/\/www.geocode.farm\/policies\/privacy-policy\/"
+        },
+        "STATUS": {
+            "access": "FREE_USER, ACCESS_GRANTED",
+            "status": "SUCCESS",
+            "address_provided": "1000 beverly st beverly hills 90028 ca",
+            "result_count": 1
+        },
+        "ACCOUNT": {
+            "ip_address": "24.69.131.109",
+            "distribution_license": "NONE, UNLICENSED",
+            "usage_limit": "250",
+            "used_today": "10",
+            "used_total": "10",
+            "first_used": "09 Apr 2018"
+        },
+        "RESULTS": [
+            {
+                "result_number": 1,
+                "formatted_address": "1000 N Beverly Dr, Beverly Hills, CA 90210, USA",
+                "accuracy": "HIGH_ACCURACY",
+                "ADDRESS": {
+                    "street_number": "1000",
+                    "street_name": "North Beverly Drive",
+                    "locality": "Beverly Hills",
+                    "admin_2": "Los Angeles County",
+                    "admin_1": "California",
+                    "postal_code": "90210",
+                    "country": "United States"
+                },
+                "LOCATION_DETAILS": {
+                    "elevation": "UNAVAILABLE",
+                    "timezone_long": "UNAVAILABLE",
+                    "timezone_short": "America\/Los_Angeles"
+                },
+                "COORDINATES": {
+                    "latitude": "34.0855558458290",
+                    "longitude": "-118.412741940074"
+                },
+                "BOUNDARIES": {
+                    "northeast_latitude": "34.0855558458290",
+                    "northeast_longitude": "-118.412741940074",
+                    "southwest_latitude": "34.0842400197558",
+                    "southwest_longitude": "-118.414090880194"
+                }
+            }
+        ],
+        "STATISTICS": {
+            "https_ssl": "ENABLED, SECURE",
+            "time_taken": "0.75789403915405"
+        }
+    }
+}

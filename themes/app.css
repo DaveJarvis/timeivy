@@ -7,116 +7,100 @@ body {
 .container {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
 }
 
 aside {
-  padding-left: 24px;
+  padding-left: 6px;
+  justify-content: flex-end;
 }
 
 a {
-	text-decoration: none;
-	color: #6D942F;
-}
-
-p.contact {
-  text-align: center;
+  text-decoration: none;
+  color: #6D942F;
 }
 
 /** Hot key styles */
 kbd {
-	padding: 0.1em 0.6em;
-	border: 1px solid #ccc;
-	background-color: #f7f7f7;
-	color: #333;
-	-moz-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-	-webkit-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-	box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
-	border-radius: 3px;
-	display: inline-block;
-	margin: 0 0.1em;
-	text-shadow: 0 1px 0 #fff;
-	line-height: 1.4;
-	white-space: nowrap;
+  padding: 0.1em 0.6em;
+  border: 1px solid #ccc;
+  background-color: #f7f7f7;
+  color: #333;
+  -moz-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  -webkit-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 0 0.1em;
+  text-shadow: 0 1px 0 #fff;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
-/** Form input */
-.smart-green {
-  margin-left:auto;
-  margin-right:auto;
-
-  max-width: 450px;
-  background: #F8F8F8;
-  padding: 30px 30px 20px 30px;
-  font: 12px sans-serif;
-  color: #666;
-  border-radius: 4px;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
+form.ivy {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 300px;
+  background: rgb(248, 248, 248);
+  padding-bottom: 6px;
 }
-.smart-green h1 {
+
+form.ivy fieldset,
+form.ivy p {
+  padding: 6px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+form.ivy fieldset {
+  border: none;
+}
+
+form.ivy h1 {
   font: 24px sans-serif;
-  padding: 20px 0px 20px 40px;
-  display: block;
-  margin: -30px -30px 10px -30px;
+  margin-top: 2px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom:1px solid #89AF4C;
   color: #FFF;
   background: #9DC45F;
   text-shadow: 1px 1px 1px #949494;
   border-radius: 4px 4px 0px 0px;
   -webkit-border-radius: 4px 4px 0px 0px;
   -moz-border-radius: 4px 4px 0px 0px;
-  border-bottom:1px solid #89AF4C;
+}
 
+form.ivy label {
+  width: 96px;
+  display: inline-block;
 }
-.smart-green h1>span {
-  display: block;
-  font-size: 11px;
-  color: #FFF;
-}
-.smart-green label {
-  display: block;
-  margin: 0px 0px 4px;
-}
-.smart-green label>span {
-  float: left;
-  margin-top: 10px;
-  color: #5E5E5E;
-}
-.smart-green input[type="text"],
-.smart-green input[type="email"],
-.smart-green input[type="date"],
-.smart-green input[type="number"],
-.smart-green textarea,
-.smart-green select {
+
+form.ivy input, form.ivy textarea, form.ivy select {
   color: #555;
-  height: 30px;
-  line-height:14px;
-  width: 100%;
-  padding: 0px 0px 0px 10px;
-  margin-top: 2px;
+  width: 168px;
+  height: 24px;
   border: 1px solid #E5E5E5;
   background: #FBFBFB;
   outline: 0;
   -webkit-box-shadow: inset 1px 1px 2px rgba(238, 238, 238, 0.2);
   box-shadow: inset 1px 1px 2px rgba(238, 238, 238, 0.2);
-  font: normal 14px/14px sans-serif;
 }
-.smart-green textarea{
-  height:100px;
-  padding-top: 10px;
-}
-.smart-green input[type="submit"] {
+
+form.ivy input[type="submit"] {
   background-color: #9DC45F;
-  border-radius: 4px;
-  -webkit-border-radius: 4px;
-  -moz-border-border-radius: 4px;
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-border-radius: 6px;
   border: none;
-  padding: 8px 12px 8px 12px;
+  padding: 6px 6px 6px 6px;
   color: #FFF;
   text-shadow: 1px 1px 1px #949494;
+  width: 65px;
 }
-.smart-green input[type="submit"]:hover {
+
+form.ivy input[type="submit"]:hover {
   background-color:#80A24A;
 }
 
