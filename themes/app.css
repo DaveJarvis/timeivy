@@ -15,35 +15,76 @@ aside {
   justify-content: flex-end;
 }
 
-a {
+a.ivy {
   text-decoration: none;
   color: #6D942F;
 }
 
-/** Hot key styles */
-kbd {
-  padding: 0.1em 0.6em;
-  border: 1px solid #ccc;
-  background-color: #f7f7f7;
-  color: #333;
-  -moz-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-  -webkit-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  border-radius: 3px;
-  display: inline-block;
-  margin: 0 0.1em;
-  text-shadow: 0 1px 0 #fff;
-  line-height: 1.4;
-  white-space: nowrap;
+/** Drop-down menu */
+nav {
+	height: 2em;
+	color: white;
+	background-color: rgb(157, 196, 95);
+	line-height: 2em;
+	padding-left: 1em;
+
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
 }
 
+nav.menu ul {
+  list-style: none outside none;
+  margin: 0;
+  padding: 0;
+}
+
+nav.menu ul li {
+  display: block;
+}
+
+nav.menu ul li ul {
+  display: none;
+  border: 1px solid black;
+  margin: 0;
+  padding: 2px;
+	background-color: rgb(248, 248, 248);
+
+	-webkit-box-shadow: 2px 2px 4px #ccc;
+	-moz-box-shadow:    2px 2px 4px #ccc;
+	box-shadow:         2px 2px 4px #ccc;
+
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+}
+
+nav.menu ul li a {
+  display: block;
+  text-decoration: none;
+  white-space: nowrap;
+  color: #333333;
+}
+
+nav.menu ul li:hover ul {
+  display: block;
+  position: absolute;
+}
+
+nav.menu ul li:hover li {
+  float: none;
+}
+
+nav.menu ul li:hover li a:hover {
+	background-color: rgb(157, 196, 95);
+}
+
+/** Settings */
 form.ivy {
   margin-left: auto;
   margin-right: auto;
   max-width: 300px;
-  background: rgb(248, 248, 248);
+  background-color: rgb(248, 248, 248);
   padding-bottom: 6px;
 }
 
@@ -64,12 +105,13 @@ form.ivy h1 {
   padding-top: 6px;
   padding-bottom: 6px;
   border-bottom:1px solid #89AF4C;
-  color: #FFF;
-  background: #9DC45F;
+  color: white;
+  background-color: #9DC45F;
   text-shadow: 1px 1px 1px #949494;
-  border-radius: 4px 4px 0px 0px;
-  -webkit-border-radius: 4px 4px 0px 0px;
-  -moz-border-radius: 4px 4px 0px 0px;
+
+  -webkit-border-radius: 4px 4px 4px 0px;
+  -moz-border-radius:    4px 4px 0px 0px;
+  border-radius:         4px 4px 0px 0px;
 }
 
 form.ivy label {
@@ -82,7 +124,7 @@ form.ivy input, form.ivy textarea, form.ivy select {
   width: 168px;
   height: 24px;
   border: 1px solid #E5E5E5;
-  background: #FBFBFB;
+  background-color: #FBFBFB;
   outline: 0;
   -webkit-box-shadow: inset 1px 1px 2px rgba(238, 238, 238, 0.2);
   box-shadow: inset 1px 1px 2px rgba(238, 238, 238, 0.2);
@@ -90,14 +132,15 @@ form.ivy input, form.ivy textarea, form.ivy select {
 
 form.ivy input[type="submit"] {
   background-color: #9DC45F;
-  border-radius: 6px;
-  -webkit-border-radius: 6px;
-  -moz-border-border-radius: 6px;
   border: none;
   padding: 6px 6px 6px 6px;
   color: #FFF;
   text-shadow: 1px 1px 1px #949494;
   width: 65px;
+
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
 }
 
 form.ivy input[type="submit"]:hover {
