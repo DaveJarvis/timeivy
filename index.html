@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta name="description" content="Time tracking software for consultants."/>
@@ -18,18 +19,35 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mousetrap/1.6.1/mousetrap.min.js" integrity="sha256-z6XYkzzC5o+5PhoIPMpyq5FOZkWFGiWa0NFIDPJ57zU=" crossorigin="anonymous"></script>
 </head>
 <body>
-	<nav class="menu">
-		<ul>
-			<li><a href="#">Edit</a>
-				<ul>
-					<li><a href="#">New Shift <kbd>Ctrl+i</kbd></a></li>
-					<li><a href="#">New Day <kbd>Ctrl+d</kbd></a></li>
-					<li><a href="#">Delete Shift <kbd>Shift+Delete</kbd></a></li>
-					<li><a href="#">Delete Day <kbd>Ctrl+Delete</kbd></a></li>
-				</ul>
-			</li>
-		</ul>
-	</nav>
+  <nav class="menu">
+    <ul>
+      <li><a href="#">Edit</a>
+        <ul>
+          <li><a href="#">New Shift</a> <kbd>Ctrl+i</kbd></li>
+          <li><a href="#">New Day</a> <kbd>Ctrl+d</kbd></li>
+          <li><a href="#">Delete Shift</a> <kbd>Shift+Delete</kbd></li>
+          <li><a href="#">Delete Day</a> <kbd>Ctrl+Delete</kbd></li>
+        </ul>
+      </li>
+      <li><a href="#">Settings</a>
+        <ul>
+          <li><a href="#">Preferences</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Contact</a>
+        <ul>
+          <li><a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy" class="ivy">Support</a></li>
+          <li><a href="https://github.com/DaveJarvis/timeivy/issues" class="ivy">Bug report</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Help</a>
+        <ul>
+          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md" target="_blank""ivy">Time formats</a></li>
+          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/HOTKEYS.md" target="_blank""ivy">Hot keys</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
   <main class="section content container">
     <table id="ivy" class="ivy" cellspacing="0" cellpadding="0">
       <thead>
@@ -107,18 +125,7 @@
           </p>
         </fieldset>
         <p>
-          Edit like a spreadsheet, see:
-        </p>
-        <ul>
-          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md" target="_blank" class="ivy">Time formats</a></li>
-          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/HOTKEYS.md" target="_blank" class="ivy">Hot keys</a></li>
-        </ul>
-        <p class="contact">
-          <a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy" class="ivy">
-          Contact me</a> with questions or to beta test.
-        </p>
-        <p class="contact">
-          Submit bugs &amp; features on the <a href="https://github.com/DaveJarvis/timeivy/issues" class="ivy">issue tracker</a>.
+          A spreadsheet for timesheets.
         </p>
       </form>
     </aside>

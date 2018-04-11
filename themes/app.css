@@ -24,27 +24,28 @@ kbd {
   padding: 0.1em 0.6em;
   border: 1px solid #ccc;
   font-size: 11px;
-  font-family: Arial,Helvetica,sans-serif;
+  font-family: sans-serif;
   background-color: #f7f7f7;
   color: #333;
-  -moz-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-  -webkit-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  border-radius: 3px;
   display: inline-block;
   margin: 0 0.1em;
   text-shadow: 0 1px 0 #fff;
   line-height: 1.4;
   white-space: nowrap;
+
+  -webkit-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  -moz-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
 }
 
 /** Drop-down menu */
 nav {
   height: 2em;
-  color: white;
-  background-color: rgb(157, 196, 95);
+  background-color: rgb(121,181,7);
   line-height: 2em;
   padding-left: 1em;
 
@@ -60,7 +61,8 @@ nav.menu ul {
 }
 
 nav.menu ul li {
-  display: block;
+  display: inline-block;
+  padding-right: 1em;
 }
 
 nav.menu ul li ul {
@@ -83,7 +85,8 @@ nav.menu ul li a {
   display: block;
   text-decoration: none;
   white-space: nowrap;
-  color: #333333;
+
+  color: white;
 }
 
 nav.menu ul li:hover ul {
@@ -91,12 +94,25 @@ nav.menu ul li:hover ul {
   position: absolute;
 }
 
-nav.menu ul li:hover li {
+nav.menu ul li:hover ul li {
+  display: block;
   float: none;
+  padding-right: 0;
 }
 
-nav.menu ul li:hover li a:hover {
+nav.menu ul li:hover ul li:hover {
   background-color: rgb(157, 196, 95);
+}
+
+nav.menu ul li ul li>a {
+  color: #333333;
+  padding-right: 6px;
+	display: inline-block;
+}
+
+nav.menu ul li ul li>kbd {
+	display: inline-block;
+  float: right;
 }
 
 /** Settings */
@@ -126,8 +142,8 @@ form.ivy h1 {
   padding-bottom: 6px;
   border-bottom:1px solid #89AF4C;
   color: white;
-  background-color: #9DC45F;
   text-shadow: 1px 1px 1px #949494;
+  background-color: rgb(121,181,7);
 
   -webkit-border-radius: 4px 4px 4px 0px;
   -moz-border-radius:    4px 4px 0px 0px;
@@ -151,7 +167,7 @@ form.ivy input, form.ivy textarea, form.ivy select {
 }
 
 form.ivy input[type="submit"] {
-  background-color: #9DC45F;
+  background-color: rgb(121,181,7);
   border: none;
   padding: 6px 6px 6px 6px;
   color: #FFF;
