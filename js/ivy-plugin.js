@@ -29,7 +29,7 @@
     classActiveCellInput: 'edit',
     classCellReadOnly:    'readonly',
     maxPageSize:          30,
-    maxUndoLevels:        1000,
+    columns: [],
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
@@ -125,7 +125,7 @@
   function Plugin( element, options ) {
     this.element = element;
 
-    this.settings = $.extend( {}, defaults, options );
+    this.settings = $.extend({}, defaults, options );
     this.settings.ivy = this;
     this._defaults = defaults;
     this._name = PLUGIN_NAME;
@@ -915,15 +915,6 @@
     }
   } );
 
-  $.fn[ PLUGIN_NAME ] = function( options ) {
-    return this.each( function() {
-      if( !$.data( this, PLUGIN_KEY ) ) {
-        var plugin = new Plugin( this, options );
-        $.data( this, PLUGIN_KEY, plugin );
-      }
-    } );
-  };
-
   /**
    * Tracks the list of commands that were executed so that they can be
    * undone or redone as desired. This uses a stack to track the commands.
@@ -1159,7 +1150,7 @@
 
       // Uniquely identify the row so that multiple clones of the same row
       // will result in different states, and thereby join the undo stack.
-      this.setState( { id: this.getId(), clone: $clone } );
+      this.setState({ id: this.getId(), clone: $clone });
       $row.after( $clone );
 
       plugin.settings.onRowInsertAfter( $row, $clone );
@@ -1187,7 +1178,7 @@
       plugin.deactivate();
 
       let $row = $(plugin.getActiveCell()).closest( 'tr' );
-      this.setState( { id: this.getId(), row: $row } );
+      this.setState({ id: this.getId(), row: $row });
 
       $row.remove();
 
@@ -1204,6 +1195,19 @@
       //new CommandInsertRow( this.getPlugin() this.getState().row;
     }
   }
+
+  $.fn[ PLUGIN_NAME ] = function( options ) {
+    var plugin;
+
+    this.each( function() {
+      if( !$.data( this, PLUGIN_KEY ) ) {
+        plugin = new Plugin( this, options );
+        $.data( this, PLUGIN_KEY, plugin );
+      }
+    } );
+
+    return plugin;
+  };
 
   window.Plugin = Plugin;
 })(jQuery, window, document);

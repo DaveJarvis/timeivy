@@ -3,7 +3,7 @@
  * row and column calculations can leverage the rows and columns of the table
  * cells.
  */
-$(document).ready( function() {
+;$(document).ready( function() {
   /** @const */
   const FORMAT_TIME = 'hh:mm A';
   /** @const */
@@ -17,7 +17,15 @@ $(document).ready( function() {
   /** @const */
   const COL_TOTAL = 4;
 
-  $('#ivy tbody').ivy({
+  var ivy = $('#ivy tbody').ivy({
+		columns: [
+      { name: 'wkday', f: 'formatDate' },
+      { name: 'began', f: 'formatTime' },
+      { name: 'ended', f: 'formatTime' },
+      { name: 'shift' },
+      { name: 'total' }
+    ],
+
     /**
      * Calculates shifts and totals for each day.
      */
@@ -66,11 +74,14 @@ $(document).ready( function() {
       }
     },
     /**
-     * Called after a row is inserted. This removes all values in the row
-     * except for the day of the month.
+     * Called after a row is inserted. This sets the begin time to the
+     * end time of the previous row.
+     *
+     * @param {object} $row The row used as the template for the clone.
+     * @param {object} $clone The clone inserted after the given row.
      */
     onRowInsertAfter: function( $row, $clone ) {
-      // Only insert for the same day.
+      console.log( $clone );
       $clone.find( 'td:not(:first-child)' ).empty();
     },
     /**
@@ -79,6 +90,8 @@ $(document).ready( function() {
      *
      * @param {number} row The cell row to update.
      * @param {number} col The cell column to update.
+     * @param {defaultTime} The starting time for the cell value.
+     * @param {defaultIncrement} Number of minutes to increment the cell by.
      * @return {object} The moment object for the time at the given cell.
      */
     updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
@@ -140,6 +153,12 @@ $(document).ready( function() {
 
       return sum;
     },
+  });
+
+  console.log( ivy );
+
+	$('a#app-insert-shift').on( 'click', function( e ) {
+    ivy.editInsertRow();
   });
 } );
 

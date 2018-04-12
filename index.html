@@ -23,10 +23,10 @@
     <ul>
       <li><a href="#">Edit</a>
         <ul>
-          <li><a href="#">New Shift</a> <kbd>Ctrl+i</kbd></li>
-          <li><a href="#">New Day</a> <kbd>Ctrl+d</kbd></li>
-          <li><a href="#">Delete Shift</a> <kbd>Shift+Delete</kbd></li>
-          <li><a href="#">Delete Day</a> <kbd>Ctrl+Delete</kbd></li>
+          <li><a id="app-insert-shift" href="#">New Shift</a> <kbd>Ctrl+i</kbd></li>
+          <li><a id="app-insert-day" href="#">New Day</a> <kbd>Ctrl+d</kbd></li>
+          <li><a id="app-delete-shift" href="#">Delete Shift</a> <kbd>Shift+Delete</kbd></li>
+          <li><a id="app-delete-day" href="#">Delete Day</a> <kbd>Ctrl+Delete</kbd></li>
         </ul>
       </li>
       <li><a href="#">Settings</a>
@@ -36,14 +36,14 @@
       </li>
       <li><a href="#">Contact</a>
         <ul>
-          <li><a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy" class="ivy">Support</a></li>
-          <li><a href="https://github.com/DaveJarvis/timeivy/issues" class="ivy">Bug report</a></li>
+          <li><a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy">Support</a></li>
+          <li><a href="https://github.com/DaveJarvis/timeivy/issues" target="_blank">Bug report</a></li>
         </ul>
       </li>
       <li><a href="#">Help</a>
         <ul>
-          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md" target="_blank""ivy">Time formats</a></li>
-          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/HOTKEYS.md" target="_blank""ivy">Hot keys</a></li>
+          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/TIMEFORMATS.md" target="_blank">Time formats</a></li>
+          <li><a href="https://github.com/DaveJarvis/timeivy/blob/master/HOTKEYS.md" target="_blank">Hot keys</a></li>
         </ul>
       </li>
     </ul>
@@ -62,7 +62,7 @@
       </thead>
       <tbody tabindex="0">
         <tr>
-          <td class="readonly">01</td>
+          <td>2018-04-12</td>
           <td>07:45 AM</td>
           <td>03:45 PM</td>
           <td class="readonly"></td>
@@ -131,8 +131,8 @@
     </aside>
   </main>
 
-  <script src="js/time.min.js"></script>
-  <script src="js/ivy-plugin.min.js"></script>
-  <script src="js/ivy-app.min.js"></script>
+  <script src="js/time.js"></script>
+  <script src="js/ivy-plugin.js"></script>
+  <script src="js/ivy-app.js"></script>
   </body>
 </html>

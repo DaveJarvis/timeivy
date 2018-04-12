@@ -21,7 +21,6 @@ Right Arrow      | Navigate one cell right
 Tab              | "
 Page Up          | Navigate one page up
 Page Down        | Navigate one page down
-Ctrl+d           | Duplicate cell above
 Ctrl+Up Arrow    | Navigate to the first non-empty cell upwards
 Ctrl+Down Arrow  | Navigate to the first non-empty cell downwards
 Ctrl+Left Arrow  | Navigate to the first non-empty cell leftwards
