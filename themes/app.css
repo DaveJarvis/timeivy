@@ -4,17 +4,6 @@ body {
   margin-top: 2px;
 }
 
-.container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-aside {
-  padding-left: 6px;
-  justify-content: flex-end;
-}
-
 a.ivy {
   text-decoration: none;
   color: #6D942F;
@@ -43,7 +32,14 @@ kbd {
 }
 
 /** Drop-down menu */
-nav {
+hr {
+  border: 0 none;
+  height: 1px;
+  color: #ccc;
+  background-color: #ccc;
+}
+
+nav.menu {
   height: 2em;
   background-color: rgb(121,181,7);
   line-height: 2em;
@@ -116,12 +112,16 @@ nav.menu ul li ul li>kbd {
 }
 
 /** Settings */
+.settings-dialog .ui-dialog-titlebar {
+  color: white;
+  background-color: rgb(121,181,7);
+  text-align: center;
+}
+
 form.ivy {
   margin-left: auto;
   margin-right: auto;
   max-width: 300px;
-  background-color: rgb(248, 248, 248);
-  padding-bottom: 6px;
 }
 
 form.ivy fieldset,
@@ -135,29 +135,14 @@ form.ivy fieldset {
   border: none;
 }
 
-form.ivy h1 {
-  font: 24px sans-serif;
-  margin-top: 2px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  border-bottom:1px solid #89AF4C;
-  color: white;
-  text-shadow: 1px 1px 1px #949494;
-  background-color: rgb(121,181,7);
-
-  -webkit-border-radius: 4px 4px 4px 0px;
-  -moz-border-radius:    4px 4px 0px 0px;
-  border-radius:         4px 4px 0px 0px;
-}
-
 form.ivy label {
-  width: 96px;
+  width: 85px;
   display: inline-block;
 }
 
 form.ivy input, form.ivy textarea, form.ivy select {
   color: #555;
-  width: 168px;
+  width: 150px;
   height: 24px;
   border: 1px solid #E5E5E5;
   background-color: #FBFBFB;

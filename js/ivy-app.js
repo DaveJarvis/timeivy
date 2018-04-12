@@ -155,10 +155,34 @@
     },
   });
 
-  console.log( ivy );
+	$("#timesheet").dialog({
+    dialogClass: 'settings-dialog',
+		position: {
+			my: 'right bottom',
+			at: 'right bottom',
+			of: window
+		}
+  });
+
+	$('a#app-edit-undo').on( 'click', function( e ) {
+    ivy.editUndo();
+  });
+
+	$('a#app-edit-redo').on( 'click', function( e ) {
+    ivy.editRedo();
+  });
 
 	$('a#app-insert-shift').on( 'click', function( e ) {
     ivy.editInsertRow();
   });
+
+	$('a#app-delete-shift').on( 'click', function( e ) {
+    ivy.editDeleteRow();
+  });
+
+	$('a#app-settings-timesheet').on( 'click', function( e ) {
+		$("#timesheet").dialog('open');
+  });
+
 } );
 
