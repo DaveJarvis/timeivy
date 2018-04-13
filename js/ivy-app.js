@@ -30,7 +30,8 @@
      * Calculates shifts and totals for each day.
      */
     onInit: function() {
-      let MAX_ROWS = this.ivy.getMaxRows();
+      let plugin = this.ivy;
+      let MAX_ROWS = plugin.getMaxRows();
 
       for( let row = 0; row <= MAX_ROWS; row++ ) {
         this.onCellValueChangeAfter( row, COL_BEGAN );
@@ -53,6 +54,7 @@
      */
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
+        let plugin = this.ivy;
         let began = this.updateCellTime( row, COL_BEGAN );
         let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
 
@@ -64,13 +66,13 @@
         }
 
         // Careful that this doesn't go recursive.
-        $(this.ivy.getCell( row, COL_SHIFT )).text( hours );
+        $(plugin.getCell( row, COL_SHIFT )).text( hours );
 
         let indexes = this.findConsecutive( row, 0 );
         let sum = this.sumConsecutive( indexes );
 
         // Set the total for the day.
-        $(this.ivy.getCell( indexes[0], COL_TOTAL )).text( sum );
+        $(plugin.getCell( indexes[0], COL_TOTAL )).text( sum );
       }
     },
     /**
@@ -81,8 +83,41 @@
      * @param {object} $clone The clone inserted after the given row.
      */
     onRowInsertAfter: function( $row, $clone ) {
-      console.log( $clone );
+      let plugin = this.ivy;
+      let ended = $clone.find( 'td:eq(' + COL_ENDED + ')' ).text();
+
       $clone.find( 'td:not(:first-child)' ).empty();
+
+      let row = $clone.index();
+      let col = COL_BEGAN;
+
+      // Trigger onCellValueChangeAfter to update the ended, shift, and
+      // total values. After this call, the end time will be the default
+      // duration after the start time.
+      plugin.setCellValue( ended, row, col );
+    },
+    /**
+     * Called after a row is appended. This increments the day of the
+     * month, if possible.
+     *
+     * @param {object} $row The row used as the template for the clone.
+     * @param {object} $clone The clone appended to the table.
+     */
+    onRowAppendAfter: function( $row, $clone ) {
+      let $date = $clone.find( 'td:first' );
+
+      let today = moment( $date.text() );
+      let tomorrow = today.clone().add( 1, 'day' );
+
+      let m1 = today.get( 'month' );
+      let m2 = tomorrow.get( 'month' );
+
+      // Insert for the month.
+      if( m1 === m2 ) {
+        $date.text( tomorrow.format( "YYYY-MM-DD" ) );
+      }
+
+      this.onInit();
     },
     /**
      * Called to ensure the cell at the given row and column has a valid
@@ -95,14 +130,15 @@
      * @return {object} The moment object for the time at the given cell.
      */
     updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
-			let cellTime = $(this.ivy.getCell( row, col ));
-			let time = $(cellTime).text();
+      let plugin = this.ivy;
+			let $cell = $(plugin.getCell( row, col ));
+			let time = $cell.text();
 
 			if( time == '' ) {
         // Clone because moments are mutable.
 				time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
         time = time.format( FORMAT_TIME );
-				$(cellTime).text( time );
+				$cell.text( time );
 			}
 
 			return moment.utc( time, FORMAT_TIME );
@@ -111,24 +147,25 @@
      * Returns the first and last row for a consecutive series of equal values.
      */
     findConsecutive: function( row, col ) {
+      let plugin = this.ivy;
       let iterator = row;
-      let comparator = $(this.ivy.getCell( row, col )).text();
+      let comparator = $(plugin.getCell( row, col )).text();
       let comparand = comparator;
 
       // Search backwards from the active row until a non-matching value.
       while( comparator == comparand && --iterator >= 0 ) {
-        comparand = $(this.ivy.getCell( iterator, col )).text();
+        comparand = $(plugin.getCell( iterator, col )).text();
       }
 
       let beginIndex = iterator + 1;
-      let MAX_ROWS = this.ivy.getMaxRows();
+      let MAX_ROWS = plugin.getMaxRows();
 
       iterator = row;
       comparand = comparator;
 
       // Search forewards from the active row until a non-matching value.
       while( comparator == comparand && ++iterator < MAX_ROWS ) {
-        comparand = $(this.ivy.getCell( iterator, col )).text();
+        comparand = $(plugin.getCell( iterator, col )).text();
       }
 
       let endedIndex = iterator - 1;
@@ -140,11 +177,12 @@
      * over all shifts in each day.
      */
     sumConsecutive: function( indexes ) {
+      let plugin = this.ivy;
       let sum = 0;
 
       // Sum shift times within the same day.
       for( let i = indexes[0]; i <= indexes[1]; i++ ) {
-        sum += parseFloat( $(this.ivy.getCell( i, COL_SHIFT )).text(), 10 )||0;
+        sum += parseFloat( $(plugin.getCell( i, COL_SHIFT )).text(), 10 )||0;
       }
 
       if( sum.toFixed ) {
