@@ -176,13 +176,16 @@
     ivy.editInsertRow();
   });
 
-	$('a#app-delete-shift').on( 'click', function( e ) {
+	$('a#app-delete-row').on( 'click', function( e ) {
     ivy.editDeleteRow();
+  });
+
+	$('a#app-append-day').on( 'click', function( e ) {
+    ivy.editAppendRow();
   });
 
 	$('a#app-settings-timesheet').on( 'click', function( e ) {
 		$("#timesheet").dialog('open');
   });
-
-} );
+});
 

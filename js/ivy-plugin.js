@@ -57,7 +57,8 @@
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
       { k: 'command+i',    f: 'editInsertRow' },
-      { k: 'ctrl+del',     f: 'editDeleteRow' },
+      { k: 'shift+del',    f: 'editDeleteRow' },
+      { k: 'shift+space',  f: 'editAppendRow' },
 
       { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
@@ -107,6 +108,14 @@
      * @param {object} $clone The clone inserted after the given row.
      */
     onRowInsertAfter: function( $row, $clone ) {
+    },
+    /**
+     * Called immediately after the given row and column cell value changes.
+     *
+     * @param {object} $row The row used as the template for the clone.
+     * @param {object} $clone The clone appended to the last row.
+     */
+    onRowAppendAfter: function( $row, $clone ) {
     },
     /**
      * Called immediately after the given row is deleted.
@@ -433,7 +442,8 @@
      * @return {boolean} True means the active cell has a read-only class.
      */
     isActiveCellReadOnly: function() {
-      return $(this.getActiveCell()).hasClass( this.settings.classCellReadOnly );
+      let $cell = $(this.getActiveCell());
+      return $cell.hasClass( this.settings.classCellReadOnly );
     },
     /**
      * Primitive to add the active class to the table cell represented by
@@ -443,7 +453,8 @@
      * @protected
      */
     activate: function() {
-      $(this.getActiveCell()).addClass( this.settings.classActiveCell );
+      let $cell = $(this.getActiveCell());
+      $cell.addClass( this.settings.classActiveCell );
     },
     /**
      * Primitive to remove the active class from the table cell represented by
@@ -453,7 +464,8 @@
      * @protected
      */
     deactivate: function() {
-      $(this.getActiveCell()).removeClass( this.settings.classActiveCell );
+      let $cell = $(this.getActiveCell());
+      $cell.removeClass( this.settings.classActiveCell );
     },
     /**
      * Returns the state of the plugin, which can be restored using the
@@ -463,10 +475,11 @@
      * @public
      */
     cellStateRetrieve: function() {
+      let $cell = $(this.getActiveCell());
       let result = {
         cellRow: this.getCellRow(),
         cellCol: this.getCellCol(),
-        cellValue: $(this.getActiveCell()).text()
+        cellValue: $cell.text()
       };
 
       return result;
@@ -688,8 +701,9 @@
      */
     editCopy: function() {
       let $temp = $('<input>');
+      let $cell = $(this.getActiveCell());
       $('body').append( $temp );
-      $temp.val( $(this.getActiveCell()).text() ).select();
+      $temp.val( $cell.text() ).select();
       document.execCommand( 'copy' );
       $temp.remove();
     },
@@ -722,15 +736,15 @@
     /**
      * Creates an input field at the active table cell.
      *
-     * @param {object} $tableCell Contains the cell width and text value used
+     * @param {object} $cell Contains the cell width and text value used
      * to create and populate the cell input field.
      * @private
      */
-    cellInputCreate: function( $tableCell ) {
-      $tableCell.addClass( this.settings.classActiveCellInput );
+    cellInputCreate: function( $cell ) {
+      $cell.addClass( this.settings.classActiveCellInput );
 
-      let cellWidth = $tableCell.width();
-      let cellValue = $tableCell.text();
+      let cellWidth = $cell.width();
+      let cellValue = $cell.text();
       let $input = $('<input>');
 
       $input.prop({
@@ -805,9 +819,9 @@
       if( $input !== false ) {
         let plugin = this;
         let cellValue = plugin.cellInputDestroy();
-        let $tableCell = $(plugin.getActiveCell());
+        let $cell = $(plugin.getActiveCell());
 
-        $tableCell.removeClass( plugin.settings.classActiveCellInput );
+        $cell.removeClass( plugin.settings.classActiveCellInput );
 
         plugin.setActiveCellValue( cellValue );
         plugin.focus();
@@ -860,7 +874,8 @@
     setActiveCellValueSilent: function( v ) {
       if( v !== false ) {
         let plugin = this;
-        $(plugin.getActiveCell()).text( v );
+        let cell = plugin.getActiveCell();
+        $(cell).text( v );
       }
     },
     /**
@@ -896,6 +911,14 @@
      */
     editDeleteRow: function() {
       this.execute( new CommandDeleteRow( this ) );
+    },
+    /**
+     * Appends a new row to the end.
+     *
+     * @public
+     */
+    editAppendRow: function() {
+      this.execute( new CommandAppendRow( this ) );
     },
     /**
      * Un-executes the previously executed command.
@@ -1082,6 +1105,7 @@
    */
   class CommandCellCut extends Command {
     constructor( plugin ) { super( plugin ); }
+
     execute() {
       let plugin = this.getPlugin();
       plugin.editCopy();
@@ -1105,15 +1129,15 @@
       plugin.bindEditMode();
       plugin.unbindPrintableKeys();
 
-      let $tableCell = $(plugin.getActiveCell());
-      let $input = plugin.cellInputCreate( $tableCell );
+      let $cell = $(plugin.getActiveCell());
+      let $input = plugin.cellInputCreate( $cell );
       plugin.setCellInput( $input );
 
       $input.on( 'focusout', function() {
         plugin.editStop();
       });
 
-      $tableCell.html( $input );
+      $cell.html( $input );
       $input.focus();
     }
   }
@@ -1145,16 +1169,23 @@
       let plugin = this.getPlugin();
       plugin.deactivate();
 
-      let $row = $(plugin.getActiveCell()).closest( 'tr' );
+      let $row = this.getRow();
       let $clone = $row.clone();
 
       // Uniquely identify the row so that multiple clones of the same row
       // will result in different states, and thereby join the undo stack.
       this.setState({ id: this.getId(), clone: $clone });
-      $row.after( $clone );
+      this.inject( $clone );
 
-      plugin.settings.onRowInsertAfter( $row, $clone );
       plugin.activate();
+    }
+
+    inject( $clone ) {
+      let plugin = this.getPlugin();
+      let $row = this.getRow();
+      
+      $row.after( $clone );
+      plugin.settings.onRowInsertAfter( $row, $clone );
     }
 
     /**
@@ -1162,6 +1193,36 @@
      */
     undo() {
       this.getState().clone.remove();
+    }
+
+    getRow() {
+      let plugin = this.getPlugin();
+      let $cell = $(plugin.getActiveCell());
+      return $cell.closest( 'tr' );
+    }
+  }
+
+  /**
+   * Clones and appends the last row to the table.
+   */
+  class CommandAppendRow extends CommandInsertRow {
+    constructor( plugin ) {
+      super( plugin );
+    }
+
+    inject( $clone ) {
+      let plugin = this.getPlugin();
+      let $row = this.getRow();
+      
+      $row.after( $clone );
+      plugin.settings.onRowAppendAfter( $row, $clone );
+    }
+
+    getRow() {
+      let plugin = this.getPlugin();
+      let $body = $(plugin.getTableBodyElement());
+      let $cell = $body.find( 'tr:last' );
+      return $cell;
     }
   }
 
@@ -1177,7 +1238,8 @@
       let plugin = this.getPlugin();
       plugin.deactivate();
 
-      let $row = $(plugin.getActiveCell()).closest( 'tr' );
+      let $cell = $(plugin.getActiveCell());
+      let $row = $cell.closest( 'tr' );
       this.setState({ id: this.getId(), row: $row });
 
       $row.remove();
