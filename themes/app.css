@@ -85,11 +85,11 @@ nav.menu ul li:hover ul li:hover {
 nav.menu ul li ul li>a {
   color: #333333;
   padding-right: 6px;
-	display: inline-block;
+  display: inline-block;
 }
 
 nav.menu ul li ul li>kbd {
-	display: inline-block;
+  display: inline-block;
   float: right;
 }
 

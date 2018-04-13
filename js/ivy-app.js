@@ -18,7 +18,7 @@
   const COL_TOTAL = 4;
 
   var ivy = $('#ivy tbody').ivy({
-		columns: [
+    columns: [
       { name: 'wkday', f: 'formatDate' },
       { name: 'began', f: 'formatTime' },
       { name: 'ended', f: 'formatTime' },
@@ -131,17 +131,17 @@
      */
     updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
       let plugin = this.ivy;
-			let $cell = $(plugin.getCell( row, col ));
-			let time = $cell.text();
+      let $cell = $(plugin.getCell( row, col ));
+      let time = $cell.text();
 
-			if( time == '' ) {
+      if( time == '' ) {
         // Clone because moments are mutable.
-				time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
+        time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
         time = time.format( FORMAT_TIME );
-				$cell.text( time );
-			}
+        $cell.text( time );
+      }
 
-			return moment.utc( time, FORMAT_TIME );
+      return moment.utc( time, FORMAT_TIME );
     },
     /**
      * Returns the first and last row for a consecutive series of equal values.
@@ -193,37 +193,37 @@
     },
   });
 
-	$("#timesheet").dialog({
+  $("#timesheet").dialog({
     dialogClass: 'settings-dialog',
-		position: {
-			my: 'right bottom',
-			at: 'right bottom',
-			of: window
-		}
+    position: {
+      my: 'right bottom',
+      at: 'right bottom',
+      of: window
+    }
   });
 
-	$('a#app-edit-undo').on( 'click', function( e ) {
+  $('a#app-edit-undo').on( 'click', function( e ) {
     ivy.editUndo();
   });
 
-	$('a#app-edit-redo').on( 'click', function( e ) {
+  $('a#app-edit-redo').on( 'click', function( e ) {
     ivy.editRedo();
   });
 
-	$('a#app-insert-shift').on( 'click', function( e ) {
+  $('a#app-insert-shift').on( 'click', function( e ) {
     ivy.editInsertRow();
   });
 
-	$('a#app-delete-row').on( 'click', function( e ) {
+  $('a#app-delete-row').on( 'click', function( e ) {
     ivy.editDeleteRow();
   });
 
-	$('a#app-append-day').on( 'click', function( e ) {
+  $('a#app-append-day').on( 'click', function( e ) {
     ivy.editAppendRow();
   });
 
-	$('a#app-settings-timesheet').on( 'click', function( e ) {
-		$("#timesheet").dialog('open');
+  $('a#app-settings-timesheet').on( 'click', function( e ) {
+    $("#timesheet").dialog('open');
   });
 });
 
