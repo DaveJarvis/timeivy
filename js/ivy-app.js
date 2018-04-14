@@ -29,7 +29,7 @@
     /**
      * Calculates shifts and totals for each day.
      */
-    onInit: function() {
+    refreshCells: function() {
       let plugin = this.ivy;
       let MAX_ROWS = plugin.getMaxRows();
 
@@ -91,10 +91,12 @@
       let row = $clone.index();
       let col = COL_BEGAN;
 
-      // Trigger onCellValueChangeAfter to update the ended, shift, and
-      // total values. After this call, the end time will be the default
-      // duration after the start time.
       plugin.setCellValue( ended, row, col );
+
+      // Sometimes setting the cell value doesn't refresh the daily
+      // total. Calling refresh here has a slight performance hit, but
+      // it ensures the correct daily total.
+      plugin.refreshCells();
     },
     /**
      * Called after a row is appended. This increments the day of the
@@ -104,6 +106,7 @@
      * @param {object} $clone The clone appended to the table.
      */
     onRowAppendAfter: function( $row, $clone ) {
+      let plugin = this.ivy;
       let $date = $clone.find( 'td:first' );
 
       let today = moment( $date.text() );
@@ -112,12 +115,12 @@
       let m1 = today.get( 'month' );
       let m2 = tomorrow.get( 'month' );
 
-      // Insert for the month.
+      // Only insert tomorrow's date if within the same month.
       if( m1 === m2 ) {
         $date.text( tomorrow.format( "YYYY-MM-DD" ) );
       }
 
-      this.onInit();
+      plugin.refreshCells();
     },
     /**
      * Called to ensure the cell at the given row and column has a valid

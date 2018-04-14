@@ -80,7 +80,7 @@
      * Called immediately after the plugin is loaded, but before users can
      * edit the data.
      */
-    onInit: function() {
+    refreshCells: function() {
     },
     /**
      * Called immediately before the active cell value changes.
@@ -155,7 +155,7 @@
      */
     init: function() {
       // Provide an initialization hook.
-      this.settings.onInit();
+      this.refreshCells();
 
       // Prevent keys from bubbling to the browser container.
       this.setup();
@@ -174,6 +174,13 @@
 
       // Highlight the default cell location.
       this.activate();
+    },
+    /**
+     * Delegates to the settings to inform the client that the cells need
+     * to be refreshed.
+     */
+    refreshCells: function() {
+      this.settings.refreshCells();
     },
     /**
      * Calls the key binding library to prevent keys from bubbling to the
@@ -325,13 +332,6 @@
       return i = i > max ? max : (i < MIN_INDEX ? MIN_INDEX : i);
     },
     /**
-     * Forces the current row and column to be within valid ranges.
-     */
-    _sanitizeCellIndexes: function() {
-      this.setCellRow( this.getCellRow() );
-      this.setCellCol( this.getCellCol() );
-    },
-    /**
      * Primitive to get the active cell row from the model.
      *
      * @return {number} The active cell row, 0-based.
@@ -460,7 +460,11 @@
      * @protected
      */
     activate: function() {
-      this._sanitizeCellIndexes();
+      // Sanitize the row.
+      this.setCellRow( this.getCellRow() );
+
+      // Sanitize the column.
+      this.setCellCol( this.getCellCol() );
 
       let $cell = $(this.getActiveCell());
       $cell.addClass( this.settings.classActiveCell );
@@ -1066,7 +1070,8 @@
      * Restore's the previously saved cell state.
      */
     undo() {
-      this.getPlugin().cellStateRestore( this.getState() );
+      let plugin = this.getPlugin();
+      plugin.cellStateRestore( this.getState() );
     }
 
     /**
@@ -1205,6 +1210,7 @@
      */
     undo() {
       this.getState().clone.remove();
+      this.getPlugin().refreshCells();
     }
 
     getRow() {
@@ -1257,6 +1263,7 @@
       $row.remove();
 
       plugin.settings.onRowDeleteAfter( $row );
+      plugin.refreshCells();
       plugin.activate();
     }
 
@@ -1266,6 +1273,7 @@
     undo() {
       let plugin = this.getPlugin();
       plugin.editInsertRow();
+      plugin.refreshCells();
     }
   }
 
