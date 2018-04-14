@@ -325,6 +325,13 @@
       return i = i > max ? max : (i < MIN_INDEX ? MIN_INDEX : i);
     },
     /**
+     * Forces the current row and column to be within valid ranges.
+     */
+    _sanitizeCellIndexes: function() {
+      this.setCellRow( this.getCellRow() );
+      this.setCellCol( this.getCellCol() );
+    },
+    /**
      * Primitive to get the active cell row from the model.
      *
      * @return {number} The active cell row, 0-based.
@@ -453,6 +460,8 @@
      * @protected
      */
     activate: function() {
+      this._sanitizeCellIndexes();
+
       let $cell = $(this.getActiveCell());
       $cell.addClass( this.settings.classActiveCell );
     },
@@ -910,7 +919,10 @@
      * @public
      */
     editDeleteRow: function() {
-      this.execute( new CommandDeleteRow( this ) );
+      // Don't delete the last row.
+      if( this.getMaxRows() > 0 ) {
+        this.execute( new CommandDeleteRow( this ) );
+      }
     },
     /**
      * Appends a new row to the end.
@@ -1252,9 +1264,8 @@
      * Removes the row that was previously inserted.
      */
     undo() {
-      // Insert after the active cell.
-      console.log( 'delete row' );
-      //new CommandInsertRow( this.getPlugin() this.getState().row;
+      let plugin = this.getPlugin();
+      plugin.editInsertRow();
     }
   }
 
