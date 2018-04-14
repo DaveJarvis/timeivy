@@ -862,7 +862,7 @@
       let plugin = this;
 
       v = plugin.settings.onCellValueChangeBefore( v, row, col );
-      $(this.getCell( row, col )).text( v );
+      $(plugin.getCell( row, col )).text( v );
       plugin.settings.onCellValueChangeAfter( row, col );
     },
     /**
@@ -1072,6 +1072,7 @@
     undo() {
       let plugin = this.getPlugin();
       plugin.cellStateRestore( this.getState() );
+      plugin.refreshCells();
     }
 
     /**
@@ -1169,8 +1170,7 @@
     }
 
     execute() {
-      let plugin = this.getPlugin();
-      plugin.setActiveCellValue( this._cellValue );
+      this.getPlugin().setActiveCellValue( this._cellValue );
     }
   }
 
@@ -1198,11 +1198,10 @@
     }
 
     inject( $clone ) {
-      let plugin = this.getPlugin();
       let $row = this.getRow();
       
       $row.after( $clone );
-      plugin.settings.onRowInsertAfter( $row, $clone );
+      this.getPlugin().settings.onRowInsertAfter( $row, $clone );
     }
 
     /**
@@ -1214,8 +1213,7 @@
     }
 
     getRow() {
-      let plugin = this.getPlugin();
-      let $cell = $(plugin.getActiveCell());
+      let $cell = $(this.getPlugin().getActiveCell());
       return $cell.closest( 'tr' );
     }
   }
@@ -1229,16 +1227,14 @@
     }
 
     inject( $clone ) {
-      let plugin = this.getPlugin();
       let $row = this.getRow();
       
       $row.after( $clone );
-      plugin.settings.onRowAppendAfter( $row, $clone );
+      this.getPlugin().settings.onRowAppendAfter( $row, $clone );
     }
 
     getRow() {
-      let plugin = this.getPlugin();
-      let $body = $(plugin.getTableBodyElement());
+      let $body = $(this.getPlugin().getTableBodyElement());
       let $cell = $body.find( 'tr:last' );
       return $cell;
     }
