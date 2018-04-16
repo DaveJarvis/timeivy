@@ -225,7 +225,7 @@
         plugin.navigateTableCell( $(this) );
       } );
 
-      $table.on( 'dblclick', 'td', function() {
+      $table.on( 'dblclick doubletap', 'td', function() {
         plugin.navigateTableCell( $(this) );
         plugin.editStart();
       } );

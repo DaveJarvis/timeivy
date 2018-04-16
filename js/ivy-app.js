@@ -205,27 +205,27 @@
     }
   });
 
-  $('a#app-edit-undo').on( 'click', function( e ) {
+  $('.app-edit-undo').on( 'click', function( e ) {
     ivy.editUndo();
   });
 
-  $('a#app-edit-redo').on( 'click', function( e ) {
+  $('.app-edit-redo').on( 'click', function( e ) {
     ivy.editRedo();
   });
 
-  $('a#app-insert-shift').on( 'click', function( e ) {
+  $('.app-insert-shift').on( 'click', function( e ) {
     ivy.editInsertRow();
   });
 
-  $('a#app-delete-row').on( 'click', function( e ) {
+  $('.app-delete-row').on( 'click', function( e ) {
     ivy.editDeleteRow();
   });
 
-  $('a#app-append-day').on( 'click', function( e ) {
+  $('.app-append-day').on( 'click', function( e ) {
     ivy.editAppendRow();
   });
 
-  $('a#app-settings-timesheet').on( 'click', function( e ) {
+  $('.app-settings-timesheet').on( 'click', function( e ) {
     $("#timesheet").dialog('open');
   });
 });

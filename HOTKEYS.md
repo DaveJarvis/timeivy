@@ -11,6 +11,7 @@ Hot Key          | Action
 Ctrl+i           | Insert a copy of the current row below the active cell
 Insert           | "
 Delete           | Delete the active cell's contents
+Shift+Delete     | Delete the active cell's row
 F2               | Enter edit mode for the active cell
 Enter            | Navigate one cell down
 Up Arrow         | Navigate one cell up

@@ -7,15 +7,12 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta name="description" content="Time tracking software for consultants."/>
   <title>Time Ivy</title>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" />
-  <link rel="stylesheet" type="text/css" media="screen"
-    href="themes/simple.css"/>
-  <link rel="stylesheet" type="text/css" media="screen"
-    href="themes/app.css"/>
-  <link rel="stylesheet" type="text/css" media="screen"
-    href="themes/ivy.css"/>
-  <link rel="stylesheet" type="text/css" media="screen"
-		href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="themes/simple.css"/>
+  <link rel="stylesheet" href="themes/app.css"/>
+  <link rel="stylesheet" href="themes/ivy.css"/>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js" integrity="sha256-9YAuB2VnFZNJ+lKfpaQ3dKQT9/C0j3VUla76hHbiVF8=" crossorigin="anonymous"></script>
@@ -26,31 +23,37 @@
     <ul>
       <li><a href="#">Edit</a>
         <ul>
-          <li><a id="app-edit-undo" href="#">Undo</a> <kbd>Ctrl+z</kbd></li>
-          <li><a id="app-edit-redo" href="#">Redo</a> <kbd>Ctrl+y</kbd></li>
+          <li><a class="app-edit-undo" href="#">Undo</a> <kbd>Ctrl+z</kbd></li>
+          <li><a class="app-edit-redo" href="#">Redo</a> <kbd>Ctrl+y</kbd></li>
           <li><hr /></li>
-          <li><a id="app-insert-shift" href="#">Insert Shift</a> <kbd>Ctrl+i</kbd></li>
-          <li><a id="app-delete-row" href="#">Delete Row</a> <kbd>Shift+Delete</kbd></li>
-          <li><a id="app-append-day" href="#">Append Day</a> <kbd>Shift+Space</kbd></li>
+          <li><a class="app-insert-shift" href="#">Insert Shift</a></li>
+          <li><a class="app-delete-row" href="#">Delete Row</a></li>
+          <li><a class="app-append-day" href="#">Append Day</a></li>
         </ul>
       </li>
       <li><a href="#">Settings</a>
         <ul>
-          <li><a id="app-settings-timesheet" href="#">Timesheet</a></li>
-          <li><a id="app-setting-preferences" href="#">Preferences</a></li>
+          <li><a class="app-settings-timesheet" href="#">Timesheet</a></li>
+          <li><a class="app-setting-preferences" href="#">Preferences</a></li>
         </ul>
       </li>
       <li><a href="#">Contact</a>
         <ul>
-          <li><a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy">Support</a></li>
           <li><a href="https://github.com/DaveJarvis/timeivy/issues" target="_blank">Bug report</a></li>
+          <li><a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy">Support</a></li>
         </ul>
       </li>
       <li><a href="#">Invoice</a>
         <ul>
           <li><a href="invoice.png" target="_blank">Preview</a></li>
           <li><a href="invoice.png" target="_blank">Send</a></li>
-          <li><a href="#">Export</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Export</a>
+        <ul>
+          <li><a href="" target="_blank">CSV</a></li>
+          <li><a href="" target="_blank">JSON</a></li>
+          <li><a href="" target="_blank">XML</a></li>
         </ul>
       </li>
       <li><a href="#">Help</a>
@@ -65,10 +68,10 @@
     <table id="ivy" class="ivy" cellspacing="0" cellpadding="0">
       <thead>
         <tr>
-          <th>Day</th>
+          <th><button accesskey="d" title="Append Day" class="ivy app-append-day">Day</button></th>
           <th>Began</th>
           <th>Ended</th>
-          <th>Shift</th>
+          <th><button accesskey="i" title="Insert Shift" class="ivy app-insert-shift">Shift</button></th>
           <th>Total</th>
           <th>Description</th>
       </tr>
