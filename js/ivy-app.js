@@ -17,7 +17,14 @@
   /** @const */
   const COL_TOTAL = 4;
 
-  var ivy = $('#ivy tbody').ivy({
+  let timesheet = '#ivy tbody';
+
+  $(".ivy-export").csv({
+    data_table: timesheet,
+    filename: 'export.csv'
+  });
+
+  var ivy = $(timesheet).ivy({
     columns: [
       { name: 'wkday', f: 'formatDate' },
       { name: 'began', f: 'formatTime' },

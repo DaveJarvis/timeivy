@@ -1,0 +1,31 @@
+{
+  "name": "timeivy",
+  "version": "0.1.0",
+  "description": "Task tracking for hourly billing",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start",
+    "deploy": "now"
+  },
+  "repository": "git+https://DaveJarvis@github.com/DaveJarvis/timeivy.git",
+  "keywords": [
+    "invoices",
+    "billing",
+    "time",
+    "task",
+    "tracking"
+  ],
+  "author": "White Magic Software, Ltd.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DaveJarvis/timeivy/issues"
+  },
+  "homepage": "https://ivy.time.rs/timeivy",
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}
