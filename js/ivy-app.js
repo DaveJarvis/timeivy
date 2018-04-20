@@ -21,7 +21,7 @@
 
   $(".ivy-export").csv({
     data_table: timesheet,
-    filename: 'export.csv'
+    filename: 'timesheet.csv'
   });
 
   var ivy = $(timesheet).ivy({
