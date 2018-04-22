@@ -57,6 +57,7 @@
      * Called when the Ivy Plugin is initialized.
      */
     init: function() {
+      let self = this;
       let plugin = this.ivy;
       let prefs = this.preferences;
       let classReadOnly = plugin.settings.classCellReadOnly;
@@ -71,7 +72,10 @@
           html += ' class="' + classReadOnly + '">';
 
           if( index === COL_DATED ) {
-            html += moment().startOf( 'month' ).format( prefs.format_date );
+            let day = moment().startOf( 'month' ).subtract( 1, 'day' );
+            day = self.getNextWorkDay( day );
+
+            html += day.format( prefs.format_date );
           }
         }
         else {
@@ -84,6 +88,29 @@
 			html += '</tr>';
 
 			$table.append( html );
+    },
+    /**
+     * Returns the day after the given day, taking into consideration
+     * the user's proferences for including weekends. This does not
+     * mutate the given day, but returns a new day that will be advanced
+     * by 1, 2, or 3 days depending on weekend preferences.
+     *
+     * @param {Object} day The momentjs date to advance by 1 day.
+     * @return {Object} A momentjs date instance advanced by n days.
+     */
+    getNextWorkDay: function( day ) {
+      let prefs = this.preferences;
+      let d = day.clone();
+
+      // Weekends don't last forever. Skipping two days would work, but
+      // eventually we'll want configurable weekends. (Some people work
+      // Tue through Sat, with Sun/Mon as weekends.)
+      do {
+        d.add( 1, 'day' );
+      }
+      while( prefs.weekends && d.toDate().isWeeeknd() );
+
+      return d;
     },
     /**
      * Calculates shifts and totals for each day.
@@ -166,26 +193,23 @@
      */
     onRowAppendAfter: function( $row, $clone ) {
       let plugin = this.ivy;
-      let prefs = this.preferences;
       let $date = $clone.find( 'td:first' );
-      let today = moment( $date.text() );
-      let tomorrow = today.clone().add( 1, 'day' );
+      let day = moment( $date.text() );
+      let m1 = day.month();
 
-      if( !prefs.weekends ) {
-				// Weekends don't last forever. Skipping two days would work, but
-        // eventually we'll want configurable weekends. (Some people work
-        // Tue through Sat, with Sun/Mon as weekends.)
-				while( tomorrow.toDate().isWeekend() ) {
-					tomorrow.add( 1, 'day' );
-				}
-			}
+      day = this.getNextWorkDay( day );
 
-      let m1 = today.month();
-      let m2 = tomorrow.month();
+      let m2 = day.month();
 
-      // Only insert tomorrow's date if within the same month.
+      // Refresh the date if within the same month.
       if( m1 === m2 ) {
-        $date.text( tomorrow.format( prefs.format_date ) );
+        let prefs = this.preferences;
+        $date.text( day.format( prefs.format_date ) );
+      }
+      else {
+        // Remove the row because an attempt was made to insert
+        // a day beyond the end of the month.
+        $row.remove();
       }
 
       plugin.refreshCells();
@@ -274,16 +298,17 @@
       let plugin = this;
       let rowIndex = plugin.getMaxRows();
       let $cell = $(plugin.getCell( rowIndex, COL_DATED ));
-      let today = moment( $cell.text() );
-      let curr_month = today.month();
+      let day = moment( $cell.text() );
+      let curr_month = day.month();
 
       // Add append days until the month flips. Adding 1 day mutates the
-      // today instance.
-      while( curr_month === today.add( 1, 'day' ).month() ) {
+      // day instance.
+      while( curr_month === day.add( 1, 'day' ).month() ) {
+        // Kicks off the weekend discriminator magic.
         plugin.editAppendRow();
 
         $cell = $(plugin.getCellLastRow( COL_DATED ));
-        today = moment( $cell.text() );
+        day = moment( $cell.text() );
       }
     },
   };
