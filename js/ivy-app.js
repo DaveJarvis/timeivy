@@ -5,9 +5,7 @@
  */
 ;$(document).ready( function() {
   /** @const */
-  const FORMAT_TIME = 'hh:mm A';
-  /** @const */
-  const FORMAT_PREC = 2;
+  const COL_DATED = 0;
   /** @const */
   const COL_BEGAN = 1;
   /** @const */
@@ -19,20 +17,74 @@
 
   let timesheet = '#ivy tbody';
 
-  $(".ivy-export").csv({
+  $(".ivy-export-csv").csv({
     data_table: timesheet,
     filename: 'timesheet.csv'
   });
 
-  var ivy = $(timesheet).ivy({
-    columns: [
-      { name: 'wkday', f: 'formatDate' },
-      { name: 'began', f: 'formatTime' },
-      { name: 'ended', f: 'formatTime' },
-      { name: 'shift' },
-      { name: 'total' }
-    ],
+/*
+  $(".ivy-export-csv").json({
+    data_table: timesheet,
+    filename: 'timesheet.json'
+  });
+*/
 
+  var ivy = $(timesheet).ivy({
+    /**
+     * Defines application preferences.
+     */
+    preferences: {
+      format_time: 'hh:mm A',
+			format_date: 'YYYY-MM-DD',
+      format_prec: 2,
+      insert_rows: [
+        {
+          began: '7:45',
+          ended: '9:30'
+        },
+        {
+          began: '9:30',
+          ended: '10:00'
+        },
+        {
+          began: '10:00',
+          ended: '3:45p'
+        },
+      ],
+			weekends: false
+    },
+    /**
+     * Called when the Ivy Plugin is initialized.
+     */
+    init: function() {
+      let plugin = this.ivy;
+      let prefs = this.preferences;
+      let classReadOnly = plugin.settings.classCellReadOnly;
+			let $table = $(plugin.getTableBodyElement());
+			let $headers = $table.prev( 'thead' ).find( 'tr:first th' );
+			let html = '<tr>';
+
+			$headers.each( function( index ) {
+        html += '<td';
+
+        if( [COL_DATED, COL_SHIFT, COL_TOTAL].includes( index ) ) {
+          html += ' class="' + classReadOnly + '">';
+
+          if( index === COL_DATED ) {
+            html += moment().startOf( 'month' ).format( prefs.format_date );
+          }
+        }
+        else {
+          html += '>';
+        }
+
+        html += '</td>';
+			});
+
+			html += '</tr>';
+
+			$table.append( html );
+    },
     /**
      * Calculates shifts and totals for each day.
      */
@@ -62,14 +114,14 @@
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
         let plugin = this.ivy;
+        let prefs = this.preferences;
         let began = this.updateCellTime( row, COL_BEGAN );
         let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
-
         let delta = moment.duration( ended.diff( began ) );
         let hours = delta.asHours();
 
         if( hours.toFixed ) {
-          hours = Math.abs( hours ).toFixed( FORMAT_PREC );
+          hours = Math.abs( hours ).toFixed( prefs.format_prec );
         }
 
         // Careful that this doesn't go recursive.
@@ -114,17 +166,26 @@
      */
     onRowAppendAfter: function( $row, $clone ) {
       let plugin = this.ivy;
+      let prefs = this.preferences;
       let $date = $clone.find( 'td:first' );
-
       let today = moment( $date.text() );
       let tomorrow = today.clone().add( 1, 'day' );
 
-      let m1 = today.get( 'month' );
-      let m2 = tomorrow.get( 'month' );
+      if( !prefs.weekends ) {
+				// Weekends don't last forever. Skipping two days would work, but
+        // eventually we'll want configurable weekends. (Some people work
+        // Tue through Sat, with Sun/Mon as weekends.)
+				while( tomorrow.toDate().isWeekend() ) {
+					tomorrow.add( 1, 'day' );
+				}
+			}
+
+      let m1 = today.month();
+      let m2 = tomorrow.month();
 
       // Only insert tomorrow's date if within the same month.
       if( m1 === m2 ) {
-        $date.text( tomorrow.format( "YYYY-MM-DD" ) );
+        $date.text( tomorrow.format( prefs.format_date ) );
       }
 
       plugin.refreshCells();
@@ -141,17 +202,18 @@
      */
     updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
       let plugin = this.ivy;
+      let prefs = this.preferences;
       let $cell = $(plugin.getCell( row, col ));
       let time = $cell.text();
 
       if( time == '' ) {
         // Clone because moments are mutable.
         time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
-        time = time.format( FORMAT_TIME );
+        time = time.format( prefs.format_time );
         $cell.text( time );
       }
 
-      return moment.utc( time, FORMAT_TIME );
+      return moment.utc( time, prefs.format_time );
     },
     /**
      * Returns the first and last row for a consecutive series of equal values.
@@ -188,6 +250,7 @@
      */
     sumConsecutive: function( indexes ) {
       let plugin = this.ivy;
+      let prefs = this.preferences;
       let sum = 0;
 
       // Sum shift times within the same day.
@@ -196,12 +259,36 @@
       }
 
       if( sum.toFixed ) {
-        sum = sum.toFixed( FORMAT_PREC );
+        sum = sum.toFixed( prefs.format_prec );
       }
 
       return sum;
     },
   });
+
+  var extensions = {
+    /**
+     * Appends the remaining days of the week in the month.
+     */
+    editAppendMonth: function() {
+      let plugin = this;
+      let rowIndex = plugin.getMaxRows();
+      let $cell = $(plugin.getCell( rowIndex, COL_DATED ));
+      let today = moment( $cell.text() );
+      let curr_month = today.month();
+
+      // Add append days until the month flips. Adding 1 day mutates the
+      // today instance.
+      while( curr_month === today.add( 1, 'day' ).month() ) {
+        plugin.editAppendRow();
+
+        $cell = $(plugin.getCellLastRow( COL_DATED ));
+        today = moment( $cell.text() );
+      }
+    },
+  };
+
+  $.extend( true, ivy, extensions );
 
   $("#timesheet").dialog({
     dialogClass: 'settings-dialog',
@@ -230,6 +317,10 @@
 
   $('.app-append-day').on( 'click', function( e ) {
     ivy.editAppendRow();
+  });
+
+  $('.app-append-days').on( 'click', function( e ) {
+    ivy.editAppendMonth();
   });
 
   $('.app-settings-timesheet').on( 'click', function( e ) {

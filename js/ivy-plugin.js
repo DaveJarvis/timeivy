@@ -28,8 +28,6 @@
     classActiveCell:      'active',
     classActiveCellInput: 'edit',
     classCellReadOnly:    'readonly',
-    maxPageSize:          30,
-    columns: [],
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
@@ -54,10 +52,10 @@
       { k: 'ctrl+c',       f: 'editCopy' },
       { k: 'ctrl+ins',     f: 'editCopy' },
       { k: 'del',          f: 'editErase' },
+      { k: 'shift+del',    f: 'editDeleteRow' },
       { k: 'ins',          f: 'editInsertRow' },
       { k: 'ctrl+i',       f: 'editInsertRow' },
       { k: 'command+i',    f: 'editInsertRow' },
-      { k: 'shift+del',    f: 'editDeleteRow' },
       { k: 'shift+space',  f: 'editAppendRow' },
 
       { k: 'ctrl+s',       f: 'editSave' },
@@ -77,8 +75,12 @@
       { k: 'esc',          f: 'editCancel' },
     ],
     /**
-     * Called immediately after the plugin is loaded, but before users can
-     * edit the data.
+     * Called when the plugin is initialized.
+     */
+    init: function() {
+    },
+    /**
+     * Called before users can edit the data.
      */
     refreshCells: function() {
     },
@@ -154,7 +156,10 @@
      * @protected
      */
     init: function() {
-      // Provide an initialization hook.
+      // Notify extensions that the plugin is ready.
+      this.settings.init();
+
+      // Notify extensions that cells must be refreshed.
       this.refreshCells();
 
       // Prevent keys from bubbling to the browser container.
@@ -332,6 +337,15 @@
       return i = i > max ? max : (i < MIN_INDEX ? MIN_INDEX : i);
     },
     /**
+     * Primitive to get the table body via jQuery.
+     *
+     * @return {object} An element that represents the tbody containing cells.
+     * @public
+     */
+    getTableBodyElement: function() {
+      return $(this.element)[0];
+    },
+    /**
      * Primitive to get the active cell row from the model.
      *
      * @return {number} The active cell row, 0-based.
@@ -348,43 +362,6 @@
      */
     getCellCol: function() {
       return this._cell[1];
-    },
-    /**
-     * Primitive to get the table body via jQuery.
-     *
-     * @return {object} An element that represents the tbody containing cells.
-     * @public
-     */
-    getTableBodyElement: function() {
-      return $(this.element)[0];
-    },
-    /**
-     * Primitive to get the active table cell element, which can be referenced
-     * using jQuery.
-     *
-     * @return {object} This returns a td element that can be styled.
-     * @public
-     */
-    getActiveCell: function() {
-      let row = this.getCellRow();
-      let col = this.getCellCol();
-
-      return this.getCell( row, col );
-    },
-    /**
-     * Primitive to get the table cell at the given row and column. The row
-     * and column values must be sanitized prior to calling.
-     *
-     * @param {number} row The cell value's row to retrieve.
-     * @param {number} col The cell value's column to retrieve.
-     * @return {string} The cell value at the given row and column.
-     * @public
-     */
-    getCell: function( row, col ) {
-      let plugin = this;
-      let table = this.getTableBodyElement();
-
-      return table.rows[ row ].cells[ col ];
     },
     /**
      * Primitive to change the cell row without updating the user interface.
@@ -409,6 +386,47 @@
      */
     setCellCol: function( col ) {
       this._cell[1] = this._sanitizeCellIndex( col, this.getMaxCols() );
+    },
+    /**
+     * Primitive to get the table cell at the given row and column. The row
+     * and column values must be sanitized prior to calling.
+     *
+     * @param {number} row The cell value's row to retrieve.
+     * @param {number} col The cell value's column to retrieve.
+     * @return {string} The cell value at the given row and column.
+     * @public
+     */
+    getCell: function( row, col ) {
+      let plugin = this;
+      let table = this.getTableBodyElement();
+
+      return table.rows[ row ].cells[ col ];
+    },
+    /**
+     * Primitive to get the last cell in the table for a column. The column
+     * value must be sanitized prior to calling.
+     *
+     * @param {number} col The cell value's column to retrieve.
+     * @return {string} The cell value at the last row and given column.
+     * @public
+     */
+    getCellLastRow: function( col ) {
+      let row = this.getMaxRows();
+
+      return this.getCell( row, col );
+    },
+    /**
+     * Primitive to get the active table cell element, which can be referenced
+     * using jQuery.
+     *
+     * @return {object} This returns a td element that can be styled.
+     * @public
+     */
+    getActiveCell: function() {
+      let row = this.getCellRow();
+      let col = this.getCellCol();
+
+      return this.getCell( row, col );
     },
     /**
      * Primitive that returns the maximum number of table rows.

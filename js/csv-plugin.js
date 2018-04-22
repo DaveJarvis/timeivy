@@ -1,7 +1,7 @@
 /**
- * HTML to CSV converter for jQuery.
+ * HTML table to CSV converter for jQuery.
  *
- * Copyright 2018 White Magic Software, Ltd.
+ * https://stackoverflow.com/a/16203218/59087
  */
 ;(function( $, window, document, undefined ) {
   'use strict';
