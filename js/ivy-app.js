@@ -108,7 +108,7 @@
       do {
         d.add( 1, 'day' );
       }
-      while( prefs.weekends && d.toDate().isWeeeknd() );
+      while( (!prefs.weekends) && d.toDate().isWeekend() );
 
       return d;
     },
