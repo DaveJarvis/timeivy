@@ -28,6 +28,7 @@
     classActiveCell:      'active',
     classActiveCellInput: 'edit',
     classCellReadOnly:    'readonly',
+    maxPageSize:          30,
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
       { k: 'up',           f: 'navigateUp' },
@@ -228,12 +229,12 @@
 
       $table.on( 'click', 'td', function() {
         plugin.navigateTableCell( $(this) );
-      } );
+      });
 
       $table.on( 'dblclick doubletap', 'td', function() {
         plugin.navigateTableCell( $(this) );
         plugin.editStart();
-      } );
+      });
     },
     /**
      * Start cell editing when a printable character is typed.
@@ -251,8 +252,13 @@
         // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
         if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
           plugin.editStart( String.fromCharCode( charCode ) );
+
+          // Some browsers pass the pressed key into the input field... while
+          // other browsers do not. This levels the playing field.
+          e.stopPropagation();
+          e.preventDefault();
         }
-      } );
+      });
     },
     /**
      * Stop cell editing when a printable character is typed.
@@ -284,7 +290,7 @@
         Mousetrap.bind( k, function( e ) {
           // Call the mapped function by its string name.
           plugin[ f ]();
-        } );
+        });
       }
     },
     /**
@@ -321,7 +327,7 @@
           e.stopPropagation();
           e.preventDefault();
         }
-      } );
+      });
     },
     /**
      * Primitive to sanitize the row and column values. This will return
@@ -765,28 +771,26 @@
       }
     },
     /**
-     * Creates an input field at the active table cell.
+     * Creates an input field at the active table cell using the
+     * given cell's dimensions.
      *
      * @param {object} $cell Contains the cell width and text value used
      * to create and populate the cell input field.
      * @private
      */
-    cellInputCreate: function( $cell ) {
+    cellInputCreate: function( $cell, charCode ) {
       $cell.addClass( this.settings.classActiveCellInput );
 
       let cellWidth = $cell.width();
-      let cellValue = $cell.text();
+      let cellValue = charCode ? charCode : $cell.text();
       let $input = $('<input>');
-
-      $input.prop({
-        type: 'text',
-        value: cellValue,
-      });
 
       $input.css({
         'width': cellWidth,
         'max-width': cellWidth,
       });
+
+      $input.val( cellValue );
 
       return $input;
     },
@@ -812,7 +816,7 @@
       return this._$cellInput;
     },
     /**
-     * Sets the input field used for editing by the user.
+     * Sets the input field widget used for editing by the user.
      *
      * @param {object} $input The new value for the cell input field widget.
      * @protected
@@ -903,6 +907,8 @@
      * @protected
      */
     setActiveCellValueSilent: function( v ) {
+      console.log( 'setActiveCellValueSilent ' + v );
+
       if( v !== false ) {
         let plugin = this;
         let cell = plugin.getActiveCell();
@@ -970,7 +976,7 @@
     editRedo: function() {
       this.getCommandExecutor().redo();
     }
-  } );
+  });
 
   /**
    * Tracks the list of commands that were executed so that they can be
@@ -1156,8 +1162,7 @@
   class CommandCellEditStart extends Command {
     constructor( plugin, charCode ) {
       super( plugin );
-
-      plugin.setActiveCellValueSilent( charCode );
+      this._charCode = charCode;
     }
 
     execute() {
@@ -1166,15 +1171,20 @@
       plugin.unbindPrintableKeys();
 
       let $cell = $(plugin.getActiveCell());
-      let $input = plugin.cellInputCreate( $cell );
+      let $input = plugin.cellInputCreate( $cell, this._charCode );
+
+      console.log( $cell.html() );
+
+      // Keep track of the input field editor.
       plugin.setCellInput( $input );
+
+      // Replace the cell's HTML value with an input field.
+      $cell.html( $input );
+      $input.focus();
 
       $input.on( 'focusout', function() {
         plugin.editStop();
       });
-
-      $cell.html( $input );
-      $input.focus();
     }
   }
 
@@ -1299,7 +1309,7 @@
         plugin = new Plugin( this, options );
         $.data( this, PLUGIN_KEY, plugin );
       }
-    } );
+    });
 
     return plugin;
   };

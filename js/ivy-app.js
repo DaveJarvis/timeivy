@@ -17,17 +17,15 @@
 
   let timesheet = '#ivy tbody';
 
-  $(".ivy-export-csv").csv({
+  $(".ivy-export-csv").exportable({
     data_table: timesheet,
     filename: 'timesheet.csv'
   });
 
-/*
-  $(".ivy-export-csv").json({
+  $(".ivy-export-json").exportable({
     data_table: timesheet,
     filename: 'timesheet.json'
   });
-*/
 
   var ivy = $(timesheet).ivy({
     /**
