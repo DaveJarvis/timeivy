@@ -27,30 +27,34 @@
     filename: 'timesheet.json'
   });
 
+  /**
+   * User-defined application preferences, including rows for daily
+   * templates.
+   */
+  var user_preferences = {
+    format_time: 'hh:mm A',
+    format_date: 'YYYY-MM-DD',
+    format_prec: 2,
+    insert_rows: [
+      {
+        began: '7:45',
+        ended: '9:30'
+      },
+      {
+        began: '9:30',
+        ended: '10:00'
+      },
+      {
+        began: '10:00',
+        ended: '3:45p'
+      },
+    ],
+    weekends: 'No',
+    columns: [],
+  };
+
   var ivy = $(timesheet).ivy({
-    /**
-     * Defines application preferences.
-     */
-    preferences: {
-      format_time: 'hh:mm A',
-			format_date: 'YYYY-MM-DD',
-      format_prec: 2,
-      insert_rows: [
-        {
-          began: '7:45',
-          ended: '9:30'
-        },
-        {
-          began: '9:30',
-          ended: '10:00'
-        },
-        {
-          began: '10:00',
-          ended: '3:45p'
-        },
-      ],
-			weekends: false
-    },
+    preferences: user_preferences,
     /**
      * Called when the Ivy Plugin is initialized.
      */
@@ -313,41 +317,73 @@
 
   $.extend( true, ivy, extensions );
 
-  $("#timesheet").dialog({
+  $("#settings").dialog({
     dialogClass: 'settings-dialog',
     position: {
-      my: 'right bottom',
-      at: 'right bottom',
+      my: 'right top',
+      at: 'right top',
       of: window
     }
   });
 
-  $('.app-edit-undo').on( 'click', function( e ) {
-    ivy.editUndo();
+  $('.app-settings-preferences').on( 'click', function( e ) {
+    $("#settings").dialog('open');
   });
 
-  $('.app-edit-redo').on( 'click', function( e ) {
-    ivy.editRedo();
-  });
+  /**
+   * Maps user-interface menu items to ivy function calls.
+   */
+  let ui = [
+    { a: 'edit-cut',     f: 'Cut' },
+    { a: 'edit-copy',    f: 'Copy' },
+    { a: 'edit-undo',    f: 'Undo' },
+    { a: 'edit-redo',    f: 'Redo' },
+    { a: 'insert-shift', f: 'InsertRow' },
+    { a: 'delete-row',   f: 'DeleteRow' },
+    { a: 'append-day',   f: 'AppendRow' },
+    { a: 'append-days',  f: 'AppendMonth' },
+  ];
 
-  $('.app-insert-shift').on( 'click', function( e ) {
-    ivy.editInsertRow();
-  });
+  let len = ui.length;
 
-  $('.app-delete-row').on( 'click', function( e ) {
-    ivy.editDeleteRow();
-  });
+  for( let i = 0; i < len; i++ ) {
+    $( '.app-' + ui[i].a ).on( 'click', function( e ) {
+      ivy[ 'edit' + ui[i].f ]();
+    });
+  }
 
-  $('.app-append-day').on( 'click', function( e ) {
-    ivy.editAppendRow();
-  });
+	var element = document.getElementById( 'editor' );
 
-  $('.app-append-days').on( 'click', function( e ) {
-    ivy.editAppendMonth();
-  });
-
-  $('.app-settings-timesheet').on( 'click', function( e ) {
-    $("#timesheet").dialog('open');
-  });
+	var editor = new JSONEditor( element, {
+		theme: 'jqueryui',
+		disable_collapse: true,
+		disable_edit_json: true,
+		disable_properties: true,
+		no_additional_properties: true,
+		schema: {
+			'title': 'Preferences',
+			'type': 'object',
+			'properties': {
+				'format_time': {
+					'type': 'string',
+					'title': 'Time Format'
+				},
+				'format_date': {
+					'type': 'string',
+					'title': 'Date Format'
+				},
+				'format_prec': {
+					'type': 'integer',
+					'title': 'Precision'
+				},
+				'weekends': {
+					'type': 'string',
+					'title': 'Weekends',
+					'enum': ['Yes', 'No']
+				}
+			}
+		},
+		'startval': user_preferences,
+	});
 });
 

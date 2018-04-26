@@ -201,8 +201,8 @@
       }
     },
     /**
-     * Jumps to a given table cell. This is used upon receiving a click or
-     * double-click event.
+     * Jumps to a given table cell. This is used upon receiving click,
+     * double-click, tap, and double-tap events.
      *
      * @param {object} $cell The cell to activate.
      * @public
@@ -349,7 +349,7 @@
      * @public
      */
     getTableBodyElement: function() {
-      return $(this.element)[0];
+      return $(this.element)[ 0 ];
     },
     /**
      * Primitive to get the active cell row from the model.
@@ -358,7 +358,7 @@
      * @public
      */
     getCellRow: function() {
-      return this._cell[0];
+      return this._cell[ 0 ];
     },
     /**
      * Primitive to get the active cell column from the model.
@@ -367,7 +367,7 @@
      * @public
      */
     getCellCol: function() {
-      return this._cell[1];
+      return this._cell[ 1 ];
     },
     /**
      * Primitive to change the cell row without updating the user interface.
@@ -934,6 +934,22 @@
       console.log( 'Save cells' );
     },
     /**
+     * Adds a new column to the end of columns.
+     *
+     * @public
+     */
+    editInsertColumn: function( name ) {
+      this.execute( new CommandInsertColumn( this, name ) );
+    },
+    /**
+     * Removes the column with the given name.
+     *
+     * @public
+     */
+    editDeleteColumn: function( name ) {
+      this.execute( new CommandDeleteColumn( this, name ) );
+    },
+    /**
      * Inserts a new row before the active cell row.
      *
      * @public
@@ -1199,6 +1215,23 @@
 
     execute() {
       this.getPlugin().setActiveCellValue( this._cellValue );
+    }
+  }
+
+  class CommandInsertColumn extends Command {
+    constructor( plugin, name ) {
+      super( plugin );
+
+      this._columnName = name;
+    }
+
+    execute() {
+      let plugin = this.getPlugin();
+      plugin.deactivate();
+
+      let $body = $(plugin.getTableBodyElement()).parent().find( 'thead' );
+
+      plugin.activate();
     }
   }
 
