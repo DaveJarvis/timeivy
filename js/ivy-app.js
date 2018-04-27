@@ -27,11 +27,105 @@
     filename: 'timesheet.json'
   });
 
+  let user_preferences_schema = {
+    'title': 'Preferences',
+    'type': 'object',
+    'properties': {
+      'weekdays': {
+        'title': 'Weekdays',
+        'type': 'array',
+        'format': 'table',
+        'uniqueItems': true,
+        'items': {
+          'type': 'object',
+          'required': 'weekday',
+          'properties': {
+            'weekday': {
+              'title': 'Weekday',
+              'type': 'string',
+              'enum': [0, 1, 2, 3, 4, 5, 6],
+              'options': {
+                'enum_titles': [
+                  'Sunday',
+                  'Monday',
+                  'Tuesday',
+                  'Wednesday',
+                  'Thursday',
+                  'Friday',
+                  'Saturday',
+                ],
+              },
+            },
+            'times': {
+              'title': 'Times',
+              'type': 'array',
+              'format': 'table',
+              'items': {
+                'type': 'object',
+                'properties': {
+                  'begin': {
+                    'title': 'Began',
+                    'type': 'string',
+                    'default': '08:00 AM',
+                  },
+                  'ended': {
+                    'title': 'Ended',
+                    'type': 'string',
+                    'default': '04:00 PM',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      'formats': {
+        'title': 'Format',
+        'type': 'object',
+        'properties': {
+          'format_time': {
+            'type': 'string',
+            'title': 'Time',
+            'default': 'HH:mm A',
+          },
+          'format_date': {
+            'type': 'string',
+            'title': 'Date',
+            'default': 'YYYY-MMM-DD',
+          },
+          'format_prec': {
+            'type': 'integer',
+            'title': 'Precision',
+            'default': 2,
+          },
+        },
+      },
+      'dates': {
+        'title': 'Dates',
+        'type': 'object',
+        'properties': {
+          'weekends': {
+            'type': 'boolean',
+            'title': 'Weekends',
+            'format': 'checkbox',
+            'default': false,
+          },
+          'holidays': {
+            'type': 'boolean',
+            'title': 'Holidays',
+            'format': 'checkbox',
+            'default': false,
+          },
+        },
+      },
+    },
+  };
+
   /**
    * User-defined application preferences, including rows for daily
    * templates.
    */
-  var user_preferences = {
+  let user_preferences = {
     format_time: 'hh:mm A',
     format_date: 'YYYY-MM-DD',
     format_prec: 2,
@@ -53,7 +147,7 @@
     columns: [],
   };
 
-  var ivy = $(timesheet).ivy({
+  let ivy = $(timesheet).ivy({
     preferences: user_preferences,
     /**
      * Called when the Ivy Plugin is initialized.
@@ -63,11 +157,11 @@
       let plugin = this.ivy;
       let prefs = this.preferences;
       let classReadOnly = plugin.settings.classCellReadOnly;
-			let $table = $(plugin.getTableBodyElement());
-			let $headers = $table.prev( 'thead' ).find( 'tr:first th' );
-			let html = '<tr>';
+      let $table = $(plugin.getTableBodyElement());
+      let $headers = $table.prev( 'thead' ).find( 'tr:first th' );
+      let html = '<tr>';
 
-			$headers.each( function( index ) {
+      $headers.each( function( index ) {
         html += '<td';
 
         if( [COL_DATED, COL_SHIFT, COL_TOTAL].includes( index ) ) {
@@ -85,11 +179,11 @@
         }
 
         html += '</td>';
-			});
+      });
 
-			html += '</tr>';
+      html += '</tr>';
 
-			$table.append( html );
+      $table.append( html );
     },
     /**
      * Returns the day after the given day, taking into consideration
@@ -319,11 +413,15 @@
 
   $("#settings").dialog({
     dialogClass: 'settings-dialog',
+    autoOpen: true,
+    maxHeight: $(window).height() * 0.75,
+    height: 'auto',
+    width: 'auto',
     position: {
       my: 'right top',
       at: 'right top',
       of: window
-    }
+    },
   });
 
   $('.app-settings-preferences').on( 'click', function( e ) {
@@ -352,38 +450,21 @@
     });
   }
 
-	var element = document.getElementById( 'editor' );
+  let element = document.getElementById( 'editor' );
 
-	var editor = new JSONEditor( element, {
-		theme: 'jqueryui',
-		disable_collapse: true,
-		disable_edit_json: true,
-		disable_properties: true,
-		no_additional_properties: true,
-		schema: {
-			'title': 'Preferences',
-			'type': 'object',
-			'properties': {
-				'format_time': {
-					'type': 'string',
-					'title': 'Time Format'
-				},
-				'format_date': {
-					'type': 'string',
-					'title': 'Date Format'
-				},
-				'format_prec': {
-					'type': 'integer',
-					'title': 'Precision'
-				},
-				'weekends': {
-					'type': 'string',
-					'title': 'Weekends',
-					'enum': ['Yes', 'No']
-				}
-			}
-		},
-		'startval': user_preferences,
-	});
+  let editor = new JSONEditor( element, {
+    theme: 'jqueryui',
+    disable_collapse: true,
+    disable_edit_json: true,
+    disable_properties: true,
+    disable_array_reorder: true,
+    disable_array_delete_all_rows: true,
+    disable_array_delete_last_row: true,
+    required_by_default: true,
+    no_additional_properties: true,
+    remove_empty_properties: true,
+    schema: user_preferences_schema,
+    //startval: user_preferences,
+  });
 });
 
