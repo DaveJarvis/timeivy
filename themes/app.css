@@ -108,7 +108,7 @@ th.ui-state-active {
 
 /** Column name for daily time template. */
 th.ui-state-active:last-of-type:after {
-  content: 'Delete';
+  content: 'Remove';
 }
 
 button.ivy {

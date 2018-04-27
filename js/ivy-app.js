@@ -63,7 +63,7 @@
               'items': {
                 'type': 'object',
                 'properties': {
-                  'begin': {
+                  'began': {
                     'title': 'Began',
                     'type': 'string',
                     'default': '08:00 AM',
@@ -100,8 +100,8 @@
           },
         },
       },
-      'dates': {
-        'title': 'Dates',
+      'inclusion': {
+        'title': 'Include',
         'type': 'object',
         'properties': {
           'weekends': {
@@ -124,26 +124,36 @@
   /**
    * User-defined application preferences, including rows for daily
    * templates.
+   *
+   * @see user_preferences_schema
    */
   let user_preferences = {
-    format_time: 'hh:mm A',
-    format_date: 'YYYY-MM-DD',
-    format_prec: 2,
-    insert_rows: [
-      {
-        began: '7:45',
-        ended: '9:30'
-      },
-      {
-        began: '9:30',
-        ended: '10:00'
-      },
-      {
-        began: '10:00',
-        ended: '3:45p'
-      },
+    formats: {
+      format_time: 'hh:mm A',
+      format_date: 'YYYY-MM-DD',
+      format_prec: 2,
+    },
+    weekdays: [{
+      weekday: 1,
+      times: [
+        {
+          began: '745',
+          ended: '930'
+        },
+        {
+          began: '930',
+          ended: '1000'
+        },
+        {
+          began: '1000',
+          ended: '345p'
+        },
+      ]},
     ],
-    weekends: 'No',
+    inclusion: {
+      weekends: false,
+      holidays: false,
+    },
     columns: [],
   };
 
@@ -171,7 +181,7 @@
             let day = moment().startOf( 'month' ).subtract( 1, 'day' );
             day = self.getNextWorkDay( day );
 
-            html += day.format( prefs.format_date );
+            html += day.format( prefs.formats.format_date );
           }
         }
         else {
@@ -204,7 +214,7 @@
       do {
         d.add( 1, 'day' );
       }
-      while( (!prefs.weekends) && d.toDate().isWeekend() );
+      while( (!prefs.inclusion.weekends) && d.toDate().isWeekend() );
 
       return d;
     },
@@ -244,7 +254,7 @@
         let hours = delta.asHours();
 
         if( hours.toFixed ) {
-          hours = Math.abs( hours ).toFixed( prefs.format_prec );
+          hours = Math.abs( hours ).toFixed( prefs.formats.format_prec );
         }
 
         // Careful that this doesn't go recursive.
@@ -300,7 +310,7 @@
       // Refresh the date if within the same month.
       if( m1 === m2 ) {
         let prefs = this.preferences;
-        $date.text( day.format( prefs.format_date ) );
+        $date.text( day.format( prefs.formats.format_date ) );
       }
       else {
         // Remove the row because an attempt was made to insert
@@ -329,11 +339,11 @@
       if( time == '' ) {
         // Clone because moments are mutable.
         time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
-        time = time.format( prefs.format_time );
+        time = time.format( prefs.formats.format_time );
         $cell.text( time );
       }
 
-      return moment.utc( time, prefs.format_time );
+      return moment.utc( time, prefs.formats.format_time );
     },
     /**
      * Returns the first and last row for a consecutive series of equal values.
@@ -379,7 +389,7 @@
       }
 
       if( sum.toFixed ) {
-        sum = sum.toFixed( prefs.format_prec );
+        sum = sum.toFixed( prefs.formats.format_prec );
       }
 
       return sum;
@@ -413,7 +423,7 @@
 
   $("#settings").dialog({
     dialogClass: 'settings-dialog',
-    autoOpen: true,
+    autoOpen: false,
     maxHeight: $(window).height() * 0.75,
     height: 'auto',
     width: 'auto',
@@ -464,7 +474,7 @@
     no_additional_properties: true,
     remove_empty_properties: true,
     schema: user_preferences_schema,
-    //startval: user_preferences,
+    startval: user_preferences,
   });
 });
 
