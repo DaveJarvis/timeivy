@@ -32,8 +32,8 @@
     'type': 'object',
     'properties': {
       'weekdays': {
-        'title': 'Weekdays',
         'type': 'array',
+        'title': 'Weekdays',
         'format': 'table',
         'uniqueItems': true,
         'items': {
@@ -64,13 +64,13 @@
                 'type': 'object',
                 'properties': {
                   'began': {
-                    'title': 'Began',
                     'type': 'string',
+                    'title': 'Began',
                     'default': '08:00 AM',
                   },
                   'ended': {
-                    'title': 'Ended',
                     'type': 'string',
+                    'title': 'Ended',
                     'default': '04:00 PM',
                   },
                 },
@@ -101,8 +101,8 @@
         },
       },
       'inclusion': {
-        'title': 'Include',
         'type': 'object',
+        'title': 'Include',
         'properties': {
           'weekends': {
             'type': 'boolean',
@@ -116,6 +116,16 @@
             'format': 'checkbox',
             'default': false,
           },
+        },
+      },
+      'columns': {
+        'type': 'array',
+        'title': 'Columns',
+        'format': 'tabs',
+        'maxItems': 3,
+        'items': {
+          'type': 'string',
+          'title': 'Column',
         },
       },
     },
@@ -138,15 +148,15 @@
       times: [
         {
           began: '745',
-          ended: '930'
+          ended: '930',
         },
         {
           began: '930',
-          ended: '1000'
+          ended: '1000',
         },
         {
           began: '1000',
-          ended: '345p'
+          ended: '345p',
         },
       ]},
     ],
@@ -154,7 +164,7 @@
       weekends: false,
       holidays: false,
     },
-    columns: [],
+    columns: ['Description', 'JIRA'],
   };
 
   let ivy = $(timesheet).ivy({

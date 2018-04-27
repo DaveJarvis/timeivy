@@ -21,6 +21,8 @@ rm *.min.js > /dev/null 2>&1
 
 # Minify all files in the directory
 for js in *.js; do
-  $COMMAND --js=$js --js_output_file=$(basename $js .js).min.js
+  OPTIONS="--js $js $OPTIONS"
 done
+
+$COMMAND $OPTIONS --js_output_file ivy.min.js
 
