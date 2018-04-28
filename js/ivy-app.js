@@ -201,8 +201,6 @@
         });
       }
 
-      console.log( plugin.element );
-
       $(".ivy-export-csv").exportable({
         source: plugin.element,
         filename: 'timesheet.csv'
@@ -210,7 +208,7 @@
 
       $(".ivy-export-json").exportable({
         source: plugin.element,
-        ilename: 'timesheet.json'
+        filename: 'timesheet.json'
       });
     },
     /**
