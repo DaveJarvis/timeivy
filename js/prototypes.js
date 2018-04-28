@@ -77,9 +77,32 @@ String.prototype.toTime = function() {
   }
 
   var result =
-    (""+hours).padLeft( "00" ) + ":" + (""+minutes).padLeft( "00" ) +
+    (""+hours).padLeft( "00" ) + ":" + ("" + minutes).padLeft( "00" ) +
     " " + (post_meridiem ? "PM" : "AM");
 
   return result;
 };
+
+/**
+ * Persists the given value against the key in the browser's local storage.
+ *
+ * @param {string} key The key name associated with the given value.
+ * @param {string} key The value associated with the given key.
+ */
+Storage.prototype.put = function( key, value ) {
+  this.setItem( key, CJSON.stringify( value ) );
+}
+
+/**
+ * Retrieves the value associated with the given key from the browser's
+ * local storage.
+ *
+ * @param {string} key The key name associated with a given value.
+ * @param {object} default_value Returned if no value is associated with key.
+ */
+Storage.prototype.get = function( key, default_value ) {
+  let value = this.getItem( key );
+
+  return value === null ? default_value : CJSON.parse( value );
+}
 

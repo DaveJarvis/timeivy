@@ -15,17 +15,8 @@
   /** @const */
   const COL_TOTAL = 4;
 
-  let timesheet = '#ivy tbody';
-
-  $(".ivy-export-csv").exportable({
-    data_table: timesheet,
-    filename: 'timesheet.csv'
-  });
-
-  $(".ivy-export-json").exportable({
-    data_table: timesheet,
-    filename: 'timesheet.json'
-  });
+  /** @const */
+  const APP_PREFERENCES = 'ivy.preferences';
 
   let user_preferences_schema = {
     'title': 'Preferences',
@@ -137,48 +128,110 @@
    *
    * @see user_preferences_schema
    */
-  let user_preferences = {
-    formats: {
-      format_time: 'hh:mm A',
-      format_date: 'YYYY-MM-DD',
-      format_prec: 2,
+  let ivy = $("#ivy tbody").ivy({
+    getDefaults: function() {
+      return {
+        "formats": {
+          "format_time": "hh:mm A",
+          "format_date": "YYYY-MM-DD",
+          "format_prec": 2
+        },
+        "weekdays": [{
+          "weekday": 1,
+          "times": [
+            {
+              "began": "745",
+              "ended": "930"
+            },
+            {
+              "began": "930",
+              "ended": "1000"
+            },
+            {
+              "began": "1000",
+              "ended": "345p"
+            }
+          ]},
+        ],
+        "inclusion": {
+          "weekends": false,
+          "holidays": false
+        },
+        "columns": ["Description"]
+      };
     },
-    weekdays: [{
-      weekday: 1,
-      times: [
-        {
-          began: '745',
-          ended: '930',
-        },
-        {
-          began: '930',
-          ended: '1000',
-        },
-        {
-          began: '1000',
-          ended: '345p',
-        },
-      ]},
-    ],
-    inclusion: {
-      weekends: false,
-      holidays: false,
+    getPreferences: function() {
+      return localStorage.get( APP_PREFERENCES, this.getDefaults() );
     },
-    columns: ['Description', 'JIRA'],
-  };
-
-  let ivy = $(timesheet).ivy({
-    preferences: user_preferences,
+    setPreferences: function( prefs ) {
+      localStorage.put( APP_PREFERENCES, prefs );
+    },
     /**
-     * Called when the Ivy Plugin is initialized.
+     * Called when the Ivy plugin is initialized.
      */
     init: function() {
+      this.initMenu();
+      this.initHeadings();
+      this.initPreferencesDialog();
+      this.initPreferencesEditor();
+    },
+    /**
+     * Maps user-interface menu items to ivy function calls.
+     */
+    initMenu: function() {
       let self = this;
-      let plugin = this.ivy;
-      let prefs = this.preferences;
+      let plugin = self.ivy;
+
+      let ui = [
+        { a: 'edit-cut',     f: 'Cut' },
+        { a: 'edit-copy',    f: 'Copy' },
+        { a: 'edit-undo',    f: 'Undo' },
+        { a: 'edit-redo',    f: 'Redo' },
+        { a: 'insert-shift', f: 'InsertRow' },
+        { a: 'delete-row',   f: 'DeleteRow' },
+        { a: 'append-day',   f: 'AppendRow' },
+        { a: 'append-days',  f: 'AppendMonth' },
+      ];
+
+      let len = ui.length;
+
+      for( let i = 0; i < len; i++ ) {
+        $( '.app-' + ui[i].a ).on( 'click', function( e ) {
+          ivy[ 'edit' + ui[i].f ]();
+        });
+      }
+
+      console.log( plugin.element );
+
+      $(".ivy-export-csv").exportable({
+        source: plugin.element,
+        filename: 'timesheet.csv'
+      });
+
+      $(".ivy-export-json").exportable({
+        source: plugin.element,
+        ilename: 'timesheet.json'
+      });
+    },
+    /**
+     * Called to insert headings based on user's preferences.
+     */
+    initHeadings() {
+      let self = this;
+      let plugin = self.ivy;
+      let prefs = self.getPreferences();
       let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
-      let $headers = $table.prev( 'thead' ).find( 'tr:first th' );
+      let $head = $table.prev( 'thead' ).find( 'tr:first' );
+
+      let columns = prefs.columns;
+      let len = columns.length;
+
+      for( let i = 0; i < len; i++ ) {
+        $head.append( '<th>' + columns[i] + '</th>' );
+      }
+
+      let $headers = $head.find( 'th' );
       let html = '<tr>';
 
       $headers.each( function( index ) {
@@ -206,6 +259,57 @@
       $table.append( html );
     },
     /**
+     * Initializes the UI dialog that contains the schema editor.
+     */
+    initPreferencesDialog: function() {
+      $("#settings").dialog({
+        dialogClass: 'settings-dialog',
+        autoOpen: false,
+        maxHeight: $(window).height() * 0.75,
+        height: 'auto',
+        width: 'auto',
+        closeOnEscape: true,
+        position: {
+          my: 'right top',
+          at: 'right top',
+          of: window
+        },
+        buttons: {
+          Ok: function() {
+            $(this).dialog( "close" );
+          },
+          Cancel: function() {
+            $(this).dialog( "close" );
+          },
+        },
+      });
+
+      $('.app-settings-preferences').on( 'click', function( e ) {
+        $("#settings").dialog('open');
+      });
+    },
+    /**
+     * Call once to initialize the schema editor for user preferences.
+     */
+    initPreferencesEditor: function() {
+      let self = this;
+      let e = document.getElementById( 'editor' );
+      let editor = new JSONEditor( e, {
+        theme: 'jqueryui',
+        disable_collapse: true,
+        disable_edit_json: true,
+        disable_properties: true,
+        disable_array_reorder: true,
+        disable_array_delete_all_rows: true,
+        disable_array_delete_last_row: true,
+        required_by_default: true,
+        no_additional_properties: true,
+        remove_empty_properties: true,
+        schema: user_preferences_schema,
+        startval: self.getPreferences(),
+      });
+    },
+    /**
      * Returns the day after the given day, taking into consideration
      * the user's proferences for including weekends. This does not
      * mutate the given day, but returns a new day that will be advanced
@@ -215,7 +319,7 @@
      * @return {Object} A momentjs date instance advanced by n days.
      */
     getNextWorkDay: function( day ) {
-      let prefs = this.preferences;
+      let prefs = this.getPreferences();
       let d = day.clone();
 
       // Weekends don't last forever. Skipping two days would work, but
@@ -257,7 +361,7 @@
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
         let plugin = this.ivy;
-        let prefs = this.preferences;
+        let prefs = this.getPreferences();
         let began = this.updateCellTime( row, COL_BEGAN );
         let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
         let delta = moment.duration( ended.diff( began ) );
@@ -319,7 +423,7 @@
 
       // Refresh the date if within the same month.
       if( m1 === m2 ) {
-        let prefs = this.preferences;
+        let prefs = this.getPreferences();
         $date.text( day.format( prefs.formats.format_date ) );
       }
       else {
@@ -342,7 +446,7 @@
      */
     updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
       let plugin = this.ivy;
-      let prefs = this.preferences;
+      let prefs = this.getPreferences();
       let $cell = $(plugin.getCell( row, col ));
       let time = $cell.text();
 
@@ -390,7 +494,7 @@
      */
     sumConsecutive: function( indexes ) {
       let plugin = this.ivy;
-      let prefs = this.preferences;
+      let prefs = this.getPreferences();
       let sum = 0;
 
       // Sum shift times within the same day.
@@ -430,61 +534,5 @@
   };
 
   $.extend( true, ivy, extensions );
-
-  $("#settings").dialog({
-    dialogClass: 'settings-dialog',
-    autoOpen: false,
-    maxHeight: $(window).height() * 0.75,
-    height: 'auto',
-    width: 'auto',
-    position: {
-      my: 'right top',
-      at: 'right top',
-      of: window
-    },
-  });
-
-  $('.app-settings-preferences').on( 'click', function( e ) {
-    $("#settings").dialog('open');
-  });
-
-  /**
-   * Maps user-interface menu items to ivy function calls.
-   */
-  let ui = [
-    { a: 'edit-cut',     f: 'Cut' },
-    { a: 'edit-copy',    f: 'Copy' },
-    { a: 'edit-undo',    f: 'Undo' },
-    { a: 'edit-redo',    f: 'Redo' },
-    { a: 'insert-shift', f: 'InsertRow' },
-    { a: 'delete-row',   f: 'DeleteRow' },
-    { a: 'append-day',   f: 'AppendRow' },
-    { a: 'append-days',  f: 'AppendMonth' },
-  ];
-
-  let len = ui.length;
-
-  for( let i = 0; i < len; i++ ) {
-    $( '.app-' + ui[i].a ).on( 'click', function( e ) {
-      ivy[ 'edit' + ui[i].f ]();
-    });
-  }
-
-  let element = document.getElementById( 'editor' );
-
-  let editor = new JSONEditor( element, {
-    theme: 'jqueryui',
-    disable_collapse: true,
-    disable_edit_json: true,
-    disable_properties: true,
-    disable_array_reorder: true,
-    disable_array_delete_all_rows: true,
-    disable_array_delete_last_row: true,
-    required_by_default: true,
-    no_additional_properties: true,
-    remove_empty_properties: true,
-    schema: user_preferences_schema,
-    startval: user_preferences,
-  });
 });
 
