@@ -66,7 +66,7 @@
       let settings = plugin.settings;
       let filename = settings.filename;
 
-      // Tight code to extract the filename extension.
+      // Extract filename extension.
       // https://stackoverflow.com/a/12900504/59087
       let ext = filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
 
@@ -112,16 +112,18 @@
     json: function() {
       let plugin = this;
       let settings = plugin.settings;
+      let exports = settings.exports;
       let source = settings.source;
       let headers = []
 
+      // Find the headings for the json data map.
       $.each( $(source).parent().find( 'thead > tr > th' ), function( i, j ) {
         headers.push( $(j).text().toLowerCase() );
       });
 
       let json = [];
 
-      $.each( $(source).find( 'tbody > tr' ), function( k, v ) {
+      $.each( $(source).find( 'tr' ), function( k, v ) {
         let row = {};
 
         $.each( $(source).find( 'td' ), function( i, j ) {
@@ -133,7 +135,7 @@
 
       json = JSON.stringify( json );
 
-      this.download( json, settings.exports.json );
+      this.download( json, exports.json );
     },
     /**
      * Submits the data to the browser.
