@@ -1,5 +1,5 @@
 /**
- * Time tracking software for hourly billing.
+ * Spreadsheet.
  *
  * Copyright 2018 White Magic Software, Ltd.
  */

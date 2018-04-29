@@ -172,6 +172,7 @@
     init: function() {
       this.initMenu();
       this.initHeadings();
+      this.initTimesheet();
       this.initPreferencesDialog();
       this.initPreferencesEditor();
     },
@@ -214,23 +215,32 @@
     /**
      * Called to insert headings based on user's preferences.
      */
-    initHeadings() {
+    initHeadings: function() {
+      let plugin = this.ivy;
+      let classReadOnly = plugin.settings.classCellReadOnly;
+      let $table = $(plugin.getTableBodyElement());
+      let $head = $table.prev( 'thead' ).find( 'tr:first' );
+
+      let columns = this.getPreferences().columns;
+      let len = columns.length;
+      let html = '';
+
+      for( let i = 0; i < len; i++ ) {
+        html += ('<th>' + columns[i] + '</th>');
+      }
+
+      $head.append( html );
+    },
+    initTimesheet: function() {
       let self = this;
       let plugin = self.ivy;
       let prefs = self.getPreferences();
       let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
-      let $head = $table.prev( 'thead' ).find( 'tr:first' );
+      let $headers = $table.prev( 'thead' ).find( 'tr:first > th' );
 
-      let columns = prefs.columns;
-      let len = columns.length;
-
-      for( let i = 0; i < len; i++ ) {
-        $head.append( '<th>' + columns[i] + '</th>' );
-      }
-
-      let $headers = $head.find( 'th' );
       let html = '<tr>';
+      let date_format = prefs.formats.format_date;
 
       $headers.each( function( index ) {
         html += '<td';
@@ -242,7 +252,7 @@
             let day = moment().startOf( 'month' ).subtract( 1, 'day' );
             day = self.getNextWorkDay( day );
 
-            html += day.format( prefs.formats.format_date );
+            html += day.format( date_format );
           }
         }
         else {
