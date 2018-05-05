@@ -16,53 +16,56 @@
   const COL_TOTAL = 4;
 
   /** @const */
-  const APP_PREFERENCES = 'ivy.preferences';
+  const APP_PREFERENCES = "ivy.preferences";
 
+  // Schema editor: https://github.com/json-editor/json-editor
   let user_preferences_schema = {
-    'title': 'Preferences',
-    'type': 'object',
-    'properties': {
-      'weekdays': {
-        'type': 'array',
-        'title': 'Weekdays',
-        'format': 'table',
-        'uniqueItems': true,
-        'items': {
-          'type': 'object',
-          'required': 'weekday',
-          'properties': {
-            'weekday': {
-              'title': 'Weekday',
-              'type': 'string',
-              'enum': [0, 1, 2, 3, 4, 5, 6],
-              'options': {
-                'enum_titles': [
-                  'Sunday',
-                  'Monday',
-                  'Tuesday',
-                  'Wednesday',
-                  'Thursday',
-                  'Friday',
-                  'Saturday',
+    "description": "Controls for application behaviour.",
+    "title": "Preferences",
+    "type": "object",
+    "properties": {
+      "weekdays": {
+        "description": "Rows added when inserting new days.",
+        "type": "array",
+        "title": "Weekdays",
+        "format": "table",
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "required": "weekday",
+          "properties": {
+            "weekday": {
+              "title": "Weekday",
+              "type": "string",
+              "enum": [0, 1, 2, 3, 4, 5, 6],
+              "options": {
+                "enum_titles": [
+                  "Sunday",
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday",
                 ],
               },
             },
-            'times': {
-              'title': 'Times',
-              'type': 'array',
-              'format': 'table',
-              'items': {
-                'type': 'object',
-                'properties': {
-                  'began': {
-                    'type': 'string',
-                    'title': 'Began',
-                    'default': '08:00 AM',
+            "times": {
+              "title": "Times",
+              "type": "array",
+              "format": "table",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "began": {
+                    "type": "string",
+                    "title": "Began",
+                    "default": "08:00 AM",
                   },
-                  'ended': {
-                    'type': 'string',
-                    'title': 'Ended',
-                    'default': '04:00 PM',
+                  "ended": {
+                    "type": "string",
+                    "title": "Ended",
+                    "default": "04:00 PM",
                   },
                 },
               },
@@ -70,65 +73,70 @@
           },
         },
       },
-      'formats': {
-        'title': 'Format',
-        'type': 'object',
-        'properties': {
-          'format_time': {
-            'type': 'string',
-            'title': 'Time',
-            'default': 'HH:mm A',
+      "formats": {
+        "description": "Timesheet display formats, change with caution.",
+        "title": "Format",
+        "type": "object",
+        "properties": {
+          "format_time": {
+            "type": "string",
+            "title": "Time",
+            "default": "HH:mm A",
           },
-          'format_date': {
-            'type': 'string',
-            'title': 'Date',
-            'default': 'YYYY-MMM-DD',
+          "format_date": {
+            "type": "string",
+            "title": "Date",
+            "default": "YYYY-MMM-DD",
           },
-          'format_prec': {
-            'type': 'integer',
-            'title': 'Precision',
-            'default': 2,
-          },
-        },
-      },
-      'inclusion': {
-        'type': 'object',
-        'title': 'Include',
-        'properties': {
-          'weekends': {
-            'type': 'boolean',
-            'title': 'Weekends',
-            'format': 'checkbox',
-            'default': false,
-          },
-          'holidays': {
-            'type': 'boolean',
-            'title': 'Holidays',
-            'format': 'checkbox',
-            'default': false,
+          "format_prec": {
+            "type": "integer",
+            "title": "Precision",
+            "default": 2,
           },
         },
       },
-      'columns': {
-        'type': 'array',
-        'title': 'Columns',
-        'format': 'tabs',
-        'maxItems': 3,
-        'items': {
-          'type': 'string',
-          'title': 'Column',
+      "inclusion": {
+        "description": "Include these upon day insertion.",
+        "type": "object",
+        "title": "Include",
+        "properties": {
+          "weekends": {
+            "type": "boolean",
+            "title": "Weekends",
+            "format": "checkbox",
+            "default": false,
+          },
+          "holidays": {
+            "type": "boolean",
+            "title": "Holidays",
+            "format": "checkbox",
+            "default": false,
+          },
+        },
+      },
+      "columns": {
+        "description": "Extra columns to help organize data.",
+        "type": "array",
+        "title": "Columns",
+        "format": "tabs",
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "title": "Column",
         },
       },
     },
   };
 
   /**
-   * User-defined application preferences, including rows for daily
-   * templates.
+   * Main application entry point.
    *
-   * @see user_preferences_schema
+   * User-defined application preferences, including day templates.
    */
   let ivy = $("#ivy tbody").ivy({
+    /**
+     * @see user_preferences_schema
+     */
     getDefaults: function() {
       return {
         "formats": {
@@ -173,8 +181,12 @@
       this.initMenu();
       this.initHeadings();
       this.initTimesheet();
+      this.fillTimesheet();
       this.initPreferencesDialog();
       this.initPreferencesEditor();
+
+      // TODO: Initialize content based on preferences.
+      //this.refreshCells();
     },
     /**
      * Maps user-interface menu items to ivy function calls.
@@ -184,32 +196,31 @@
       let plugin = self.ivy;
 
       let ui = [
-        { a: 'edit-cut',     f: 'Cut' },
-        { a: 'edit-copy',    f: 'Copy' },
-        { a: 'edit-undo',    f: 'Undo' },
-        { a: 'edit-redo',    f: 'Redo' },
-        { a: 'insert-shift', f: 'InsertRow' },
-        { a: 'delete-row',   f: 'DeleteRow' },
-        { a: 'append-day',   f: 'AppendRow' },
-        { a: 'append-days',  f: 'AppendMonth' },
+        { a: "edit-cut",     f: "Cut" },
+        { a: "edit-copy",    f: "Copy" },
+        { a: "edit-undo",    f: "Undo" },
+        { a: "edit-redo",    f: "Redo" },
+        { a: "insert-shift", f: "InsertRow" },
+        { a: "delete-row",   f: "DeleteRow" },
+        { a: "append-day",   f: "AppendRow" },
       ];
 
       let len = ui.length;
 
       for( let i = 0; i < len; i++ ) {
-        $( '.app-' + ui[i].a ).on( 'click', function( e ) {
-          ivy[ 'edit' + ui[i].f ]();
+        $( ".app-" + ui[i].a ).on( "click", function( e ) {
+          ivy[ "edit" + ui[i].f ]();
         });
       }
 
       $(".ivy-export-csv").exportable({
         source: plugin.element,
-        filename: 'timesheet.csv'
+        filename: "timesheet.csv"
       });
 
       $(".ivy-export-json").exportable({
         source: plugin.element,
-        filename: 'timesheet.json'
+        filename: "timesheet.json"
       });
     },
     /**
@@ -217,69 +228,82 @@
      */
     initHeadings: function() {
       let plugin = this.ivy;
-      let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
-      let $head = $table.prev( 'thead' ).find( 'tr:first' );
+      let $head = $table.prev( "thead" ).find( "tr:first" );
 
       let columns = this.getPreferences().columns;
       let len = columns.length;
-      let html = '';
+      let html = "";
 
       for( let i = 0; i < len; i++ ) {
-        html += ('<th>' + columns[i] + '</th>');
+        html += ("<th>" + columns[i] + "</th>");
       }
 
+      // Append the user-defined headings to the fixed application headings.
       $head.append( html );
     },
-    initTimesheet: function() {
+    /**
+     * Reads data from local storage and drops in the information by month.
+     */
+    initTimesheet: function( month ) {
+      if( typeof month === "undefined" ) {
+        month = this.getCurrentMonth();
+      }
+
       let self = this;
       let plugin = self.ivy;
       let prefs = self.getPreferences();
       let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
-      let $headers = $table.prev( 'thead' ).find( 'tr:first > th' );
+      let $headers = $table.prev( "thead" ).find( "tr:first > th" );
 
-      let html = '<tr>';
+      let html = "<tr>";
       let date_format = prefs.formats.format_date;
 
       $headers.each( function( index ) {
-        html += '<td';
+        html += "<td";
 
         if( [COL_DATED, COL_SHIFT, COL_TOTAL].includes( index ) ) {
-          html += ' class="' + classReadOnly + '">';
+          html += " class='" + classReadOnly + "'>";
 
           if( index === COL_DATED ) {
-            let day = moment().startOf( 'month' ).subtract( 1, 'day' );
+            let day = moment().startOf( "month" ).subtract( 1, "day" );
             day = self.getNextWorkDay( day );
 
             html += day.format( date_format );
           }
         }
         else {
-          html += '>';
+          html += ">";
         }
 
-        html += '</td>';
+        html += "</td>";
       });
 
-      html += '</tr>';
+      html += "</tr>";
 
       $table.append( html );
+    },
+    /**
+     * Fills out the month's remaining days according to user preferences.
+     */
+    fillTimesheet: function() {
+      
     },
     /**
      * Initializes the UI dialog that contains the schema editor.
      */
     initPreferencesDialog: function() {
       $("#settings").dialog({
-        dialogClass: 'settings-dialog',
+        dialogClass: "settings-dialog",
         autoOpen: false,
         maxHeight: $(window).height() * 0.75,
-        height: 'auto',
-        width: 'auto',
+        height: "auto",
+        width: "auto",
         closeOnEscape: true,
         position: {
-          my: 'right top',
-          at: 'right top',
+          my: "right top",
+          at: "right top",
           of: window
         },
         buttons: {
@@ -292,8 +316,8 @@
         },
       });
 
-      $('.app-settings-preferences').on( 'click', function( e ) {
-        $("#settings").dialog('open');
+      $(".app-settings-preferences").on( "click", function( e ) {
+        $("#settings").dialog("open");
       });
     },
     /**
@@ -301,9 +325,9 @@
      */
     initPreferencesEditor: function() {
       let self = this;
-      let e = document.getElementById( 'editor' );
+      let e = document.getElementById( "editor" );
       let editor = new JSONEditor( e, {
-        theme: 'jqueryui',
+        theme: "jqueryui",
         disable_collapse: true,
         disable_edit_json: true,
         disable_properties: true,
@@ -316,6 +340,14 @@
         schema: user_preferences_schema,
         startval: self.getPreferences(),
       });
+    },
+    /**
+     * Returns the month for the current date.
+     *
+     * @return {number} A number from 0 (Jan) to 11 (Dec).
+     */
+    getCurrentMonth: function() {
+      return moment().month();
     },
     /**
      * Returns the day after the given day, taking into consideration
@@ -331,10 +363,10 @@
       let d = day.clone();
 
       // Weekends don't last forever. Skipping two days would work, but
-      // eventually we'll want configurable weekends. (Some people work
+      // eventually we"ll want configurable weekends. (Some people work
       // Tue through Sat, with Sun/Mon as weekends.)
       do {
-        d.add( 1, 'day' );
+        d.add( 1, "day" );
       }
       while( (!prefs.inclusion.weekends) && d.toDate().isWeekend() );
 
@@ -398,9 +430,9 @@
      */
     onRowInsertAfter: function( $row, $clone ) {
       let plugin = this.ivy;
-      let ended = $clone.find( 'td:eq(' + COL_ENDED + ')' ).text();
+      let ended = $clone.find( "td:eq(" + COL_ENDED + ")" ).text();
 
-      $clone.find( 'td:not(:first-child)' ).empty();
+      $clone.find( "td:not(:first-child)" ).empty();
 
       let row = $clone.index();
       let col = COL_BEGAN;
@@ -421,7 +453,7 @@
      */
     onRowAppendAfter: function( $row, $clone ) {
       let plugin = this.ivy;
-      let $date = $clone.find( 'td:first' );
+      let $date = $clone.find( "td:first" );
       let day = moment( $date.text() );
       let m1 = day.month();
 
@@ -458,9 +490,9 @@
       let $cell = $(plugin.getCell( row, col ));
       let time = $cell.text();
 
-      if( time == '' ) {
+      if( time == "" ) {
         // Clone because moments are mutable.
-        time = moment( defaultTime ).add( defaultIncrement, 'minutes' )
+        time = moment( defaultTime ).add( defaultIncrement, "minutes" )
         time = time.format( prefs.formats.format_time );
         $cell.text( time );
       }
@@ -531,7 +563,7 @@
 
       // Add append days until the month flips. Adding 1 day mutates the
       // day instance.
-      while( curr_month === day.add( 1, 'day' ).month() ) {
+      while( curr_month === day.add( 1, "day" ).month() ) {
         // Kicks off the weekend discriminator magic.
         plugin.editAppendRow();
 

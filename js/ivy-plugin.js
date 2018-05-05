@@ -4,12 +4,12 @@
  * Copyright 2018 White Magic Software, Ltd.
  */
 ;(function( $, window, document, undefined ) {
-  'use strict';
+  "use strict";
 
   /** @const */
-  const PLUGIN_NAME = 'ivy';
+  const PLUGIN_NAME = "ivy";
   /** @const */
-  const PLUGIN_KEY = 'plugin_' + PLUGIN_NAME;
+  const PLUGIN_KEY = "plugin_" + PLUGIN_NAME;
 
   /**
    * Cells cannot be indexed to values less than MIN_INDEX.
@@ -25,9 +25,9 @@
   const MAX_INDEX = 1000;
 
   var defaults = {
-    classActiveCell:      'active',
-    classActiveCellInput: 'edit',
-    classCellReadOnly:    'readonly',
+    classActiveCell:      "active",
+    classActiveCellInput: "edit",
+    classCellReadOnly:    "readonly",
     maxPageSize:          30,
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
@@ -59,7 +59,6 @@
       { k: 'command+i',    f: 'editInsertRow' },
       { k: 'shift+space',  f: 'editAppendRow' },
 
-      { k: 'ctrl+s',       f: 'editSave' },
       { k: 'ctrl+z',       f: 'editUndo' },
       { k: 'command+z',    f: 'editUndo' },
       { k: 'ctrl+shift+z', f: 'editRedo' },
@@ -105,7 +104,7 @@
     onCellValueChangeAfter: function( row, col ) {
     },
     /**
-     * Called immediately after the given row and column cell value changes.
+     * Called after a row is inserted.
      *
      * @param {object} $row The row used as the template for the clone.
      * @param {object} $clone The clone inserted after the given row.
@@ -113,7 +112,7 @@
     onRowInsertAfter: function( $row, $clone ) {
     },
     /**
-     * Called immediately after the given row and column cell value changes.
+     * Called after a row is appended.
      *
      * @param {object} $row The row used as the template for the clone.
      * @param {object} $clone The clone appended to the last row.
@@ -121,7 +120,7 @@
     onRowAppendAfter: function( $row, $clone ) {
     },
     /**
-     * Called immediately after the given row is deleted.
+     * Called after a row is deleted.
      *
      * @param {object} $row The row that was deleted.
      */
@@ -159,9 +158,6 @@
     init: function() {
       // Notify extensions that the plugin is ready.
       this.settings.init();
-
-      // Notify extensions that cells must be refreshed.
-      this.refreshCells();
 
       // Prevent keys from bubbling to the browser container.
       this.setup();
@@ -227,11 +223,11 @@
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
 
-      $table.on( 'click', 'td', function() {
+      $table.on( "click", "td", function() {
         plugin.navigateTableCell( $(this) );
       });
 
-      $table.on( 'dblclick doubletap', 'td', function() {
+      $table.on( "dblclick doubletap", "td", function() {
         plugin.navigateTableCell( $(this) );
         plugin.editStart();
       });
@@ -245,12 +241,12 @@
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
 
-      $table.on( 'keypress', function( e ) {
+      $table.on( "keypress", function( e ) {
         // If the character code is numeric, it is a non-printable char.
-        var charCode = (typeof e.which === 'number') ? e.which : e.keyCode;
+        var charCode = (typeof e.which === "number") ? e.which : e.keyCode;
 
         // Control keys and meta keys (Mac Command ⌘) do not trigger edit mode.
-        if( e.type === 'keypress' && charCode && !e.ctrlKey && !e.metaKey ) {
+        if( e.type === "keypress" && charCode && !e.ctrlKey && !e.metaKey ) {
           plugin.editStart( String.fromCharCode( charCode ) );
 
           // Some browsers pass the pressed key into the input field... while
@@ -269,7 +265,7 @@
       let plugin = this;
       let $table = $(plugin.getTableBodyElement());
 
-      $table.off( 'keypress' );
+      $table.off( "keypress" );
     },
     /**
      * Resets the key bindings and injects a new mapping.
@@ -319,9 +315,9 @@
     bindPasteHandler: function() {
       let plugin = this;
 
-      $(document).on( 'paste', function( e ) {
+      $(document).on( "paste", function( e ) {
         if( e.originalEvent ) {
-          let buffer = e.originalEvent.clipboardData.getData( 'text' );
+          let buffer = e.originalEvent.clipboardData.getData( "text" );
           plugin.cellUpdate( buffer );
 
           e.stopPropagation();
@@ -661,7 +657,7 @@
      * @public
      */
     navigateUpSkip: function() {
-      console.log( 'Navigate up skip' );
+      console.log( "Navigate up skip" );
       this.navigateRow( -1 );
     },
     /**
@@ -670,7 +666,7 @@
      * @public
      */
     navigateDownSkip: function() {
-      console.log( 'Navigate down skip' );
+      console.log( "Navigate down skip" );
       this.navigateRow( +1 );
     },
     /**
@@ -679,7 +675,7 @@
      * @public
      */
     navigateLeftSkip: function() {
-      console.log( 'Navigate left skip' );
+      console.log( "Navigate left skip" );
       this.navigateCol( -1 );
     },
     /**
@@ -688,7 +684,7 @@
      * @public
      */
     navigateRightSkip: function() {
-      console.log( 'Navigate right skip' );
+      console.log( "Navigate right skip" );
       this.navigateCol( +1 );
     },
     /**
@@ -737,11 +733,11 @@
      * @private
      */
     editCopy: function() {
-      let $temp = $('<input>');
+      let $temp = $("<input>");
       let $cell = $(this.getActiveCell());
-      $('body').append( $temp );
+      $("body").append( $temp );
       $temp.val( $cell.text() ).select();
-      document.execCommand( 'copy' );
+      document.execCommand( "copy" );
       $temp.remove();
     },
     /**
@@ -753,7 +749,7 @@
      * @public
      */
     editErase: function() {
-      this.cellUpdate( '' );
+      this.cellUpdate( "" );
     },
     /**
      * Sets the active cell's contents so long as the cell is not read-only.
@@ -783,11 +779,11 @@
 
       let cellWidth = $cell.width();
       let cellValue = charCode ? charCode : $cell.text();
-      let $input = $('<input>');
+      let $input = $("<input>");
 
       $input.css({
-        'width': cellWidth,
-        'max-width': cellWidth,
+        "width": cellWidth,
+        "max-width": cellWidth,
       });
 
       $input.val( cellValue );
@@ -826,7 +822,7 @@
     },
     /**
      * Enables cell editing for the active table cell, so long as the cell
-     * is not marked as read-only.
+     * is not read-only.
      *
      * @param {string} charCode Set the initial value to this character.
      * @public
@@ -907,7 +903,7 @@
      * @protected
      */
     setActiveCellValueSilent: function( v ) {
-      console.log( 'setActiveCellValueSilent ' + v );
+      console.log( "setActiveCellValueSilent " + v );
 
       if( v !== false ) {
         let plugin = this;
@@ -926,12 +922,6 @@
       if( this.editStop() ) {
         this.editUndo();
       }
-    },
-    /**
-     * @public
-     */
-    editSave: function() {
-      console.log( 'Save cells' );
     },
     /**
      * Adds a new column to the end of columns.
@@ -983,6 +973,7 @@
      */
     editUndo: function() {
       this.getCommandExecutor().undo();
+      this.refreshCells();
     },
     /**
      * Re-executes the previously un-executed command.
@@ -991,6 +982,35 @@
      */
     editRedo: function() {
       this.getCommandExecutor().redo();
+    },
+    /**
+     * Called after a row is inserted.
+     *
+     * @param {object} $row The row used as the template for the clone.
+     * @param {object} $clone The clone inserted after the given row.
+     * @public
+     */
+    onRowInsertAfter: function( $row, $clone ) {
+      this.settings.onRowInsertAfter( $row, $clone );
+    },
+    /**
+     * Called by a command after a new row is appended.
+     *
+     * @param {object} $row The row that had a new row insterted after it.
+     * @param {object} $clone The newly inserted row.
+     * @public
+     */
+    onRowAppendAfter: function( $row, $clone ) {
+      this.settings.onRowAppendAfter( $row, $clone );
+    },
+    /**
+     * Called by a command after an existing row is deleted.
+     *
+     * @param {object} $row The row that was deleted.
+     * @public
+     */
+    onRowDeleteAfter: function( $row ) {
+      this.settings.onRowDeleteAfter( $row );
     }
   });
 
@@ -1053,7 +1073,7 @@
     undo() {
       let command = this.getUndoStack().pop();
 
-      if( typeof command !== 'undefined' ) {
+      if( typeof command !== "undefined" ) {
         command.undo();
         this.getRedoStack().push( command );
       }
@@ -1071,7 +1091,7 @@
     redo() {
       let command = this.getRedoStack().pop();
 
-      if( typeof command !== 'undefined' ) {
+      if( typeof command !== "undefined" ) {
         this.execute( command );
       }
     }
@@ -1101,7 +1121,7 @@
      * @return {boolean} True when the states are the same.
      */
     equals( that ) {
-      return typeof that === 'undefined' ?
+      return typeof that === "undefined" ?
         false :
         Object.equals( this.getState(), that.getState() );
     }
@@ -1112,7 +1132,6 @@
     undo() {
       let plugin = this.getPlugin();
       plugin.cellStateRestore( this.getState() );
-      plugin.refreshCells();
     }
 
     /**
@@ -1189,8 +1208,6 @@
       let $cell = $(plugin.getActiveCell());
       let $input = plugin.cellInputCreate( $cell, this._charCode );
 
-      console.log( $cell.html() );
-
       // Keep track of the input field editor.
       plugin.setCellInput( $input );
 
@@ -1198,7 +1215,7 @@
       $cell.html( $input );
       $input.focus();
 
-      $input.on( 'focusout', function() {
+      $input.on( "focusout", function() {
         plugin.editStop();
       });
     }
@@ -1229,14 +1246,14 @@
       let plugin = this.getPlugin();
       plugin.deactivate();
 
-      let $body = $(plugin.getTableBodyElement()).parent().find( 'thead' );
+      let $body = $(plugin.getTableBodyElement()).parent().find( "thead" );
 
       plugin.activate();
     }
   }
 
   /**
-   * Inserts the active row after cloning it.
+   * Inserts a blank row after the active row.
    */
   class CommandInsertRow extends Command {
     constructor( plugin ) {
@@ -1250,6 +1267,9 @@
       let $row = this.getRow();
       let $clone = $row.clone();
 
+      // Nuke the table data for this row.
+      $clone.find( "td" ).html( "" );
+
       // Uniquely identify the row so that multiple clones of the same row
       // will result in different states, and thereby join the undo stack.
       this.setState({ id: this.getId(), clone: $clone });
@@ -1262,7 +1282,7 @@
       let $row = this.getRow();
       
       $row.after( $clone );
-      this.getPlugin().settings.onRowInsertAfter( $row, $clone );
+      this.getPlugin().onRowInsertAfter( $row, $clone );
     }
 
     /**
@@ -1270,12 +1290,11 @@
      */
     undo() {
       this.getState().clone.remove();
-      this.getPlugin().refreshCells();
     }
 
     getRow() {
       let $cell = $(this.getPlugin().getActiveCell());
-      return $cell.closest( 'tr' );
+      return $cell.closest( "tr" );
     }
   }
 
@@ -1291,12 +1310,12 @@
       let $row = this.getRow();
       
       $row.after( $clone );
-      this.getPlugin().settings.onRowAppendAfter( $row, $clone );
+      this.getPlugin().onRowAppendAfter( $row, $clone );
     }
 
     getRow() {
       let $body = $(this.getPlugin().getTableBodyElement());
-      let $cell = $body.find( 'tr:last' );
+      let $cell = $body.find( "tr:last" );
       return $cell;
     }
   }
@@ -1314,13 +1333,12 @@
       plugin.deactivate();
 
       let $cell = $(plugin.getActiveCell());
-      let $row = $cell.closest( 'tr' );
+      let $row = $cell.closest( "tr" );
       this.setState({ id: this.getId(), row: $row });
 
       $row.remove();
 
-      plugin.settings.onRowDeleteAfter( $row );
-      plugin.refreshCells();
+      plugin.onRowDeleteAfter( $row );
       plugin.activate();
     }
 
@@ -1330,7 +1348,6 @@
     undo() {
       let plugin = this.getPlugin();
       plugin.editInsertRow();
-      plugin.refreshCells();
     }
   }
 
@@ -1349,34 +1366,4 @@
 
   window.Plugin = Plugin;
 })(jQuery, window, document);
-
-/**
- * Returns the next item that will be popped off the stack, or 'undefined' if
- * there are no items in the array.
- */
-Array.prototype.peek = function() {
-  return this[ this.length - 1 ];
-};
-
-/**
- * Ensures that two objects are equal.
- *
- * @param {object} x The main object to compare.
- * @param {object} y The object to check against x.
- */
-Object.equals = function( x, y ) {
-  // 'undefined' shall not pass.
-  if( !(x instanceof Object) || !(y instanceof Object) ) return false;
-
-  // Compare all properties from x to y, recursively for objects.
-  for( let p in x ) {
-    if( !x.hasOwnProperty( p ) ) continue;
-    if( !y.hasOwnProperty( p ) ) return false;
-    if( x[ p ] === y[ p ] ) continue;
-
-    if( !Object.equals( x[ p ], y[ p ] ) ) return false;
-  }
-
-  return true;
-};
 
