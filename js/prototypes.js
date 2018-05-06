@@ -120,7 +120,7 @@ String.prototype.toTime = function() {
  * @param {object} value The value associated with the given key name.
  */
 Storage.prototype.put = function( key, value ) {
-  this.setItem( key, CJSON.stringify( value ) );
+  this.setItem( key, LZString.compressToUTF16( value ) );
 };
 
 /**
@@ -133,6 +133,6 @@ Storage.prototype.put = function( key, value ) {
 Storage.prototype.get = function( key, default_value ) {
   let value = this.getItem( key );
 
-  return value === null ? default_value : CJSON.parse( value );
+  return value === null ? default_value : LZString.decompressFromUTF16( value );
 };
 

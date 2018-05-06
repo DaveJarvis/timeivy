@@ -4,37 +4,37 @@
  * https://stackoverflow.com/a/16203218/59087
  */
 ;(function( $, window, document, undefined ) {
-  'use strict';
+  "use strict";
 
   /** @const */
-  const PLUGIN_NAME = 'exportable';
+  const PLUGIN_NAME = "exportable";
   /** @const */
-  const PLUGIN_KEY = 'plugin_' + PLUGIN_NAME;
+  const PLUGIN_KEY = "plugin_" + PLUGIN_NAME;
 
   /**
    * Insert delimiters to avoid accidental split of actual contents.
    * Exports to "export.csv" by default.
    */
   var defaults = {
-    source: 'table',
-    filename: 'export.csv',
+    source: "table",
+    filename: "export.csv",
     exports: {
       csv: {
-        file_extension: 'csv',
-        media_type_text: 'text/csv',
-        media_type_data: 'application/csv',
+        file_extension: "csv",
+        media_type_text: "text/csv",
+        media_type_data: "application/csv",
         col_delimiter: '","',
         row_delimiter: '"\r\n"',
         temp_col_delimiter: String.fromCharCode( 11 ),
         temp_row_delimiter: String.fromCharCode( 0 ),
       },
       json: {
-        file_extension: 'json',
-        media_type_text: 'text/plain',
-        media_type_data: 'application/json',
+        file_extension: "json",
+        media_type_text: "text/plain",
+        media_type_data: "application/json",
       },
     },
-    charset: 'utf-8',
+    charset: "utf-8",
   };
 
   /**
@@ -56,8 +56,7 @@
    */
   $.extend( Plugin.prototype, {
     /**
-     * Called to export the given table to a file in a file format based on
-     * the filename.
+     * Convert a table to a given format based on its filename.
      *
      * @protected
      */
@@ -71,12 +70,12 @@
       let ext = filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
 
       // Call the function that maps to the predetermined extension.
-      $(plugin.element).on( 'click tap', function( event ) {
+      $(plugin.element).on( "click tap", function( event ) {
         plugin[ext]();
       });
     },
     /**
-     * Called to export the given table to a file.
+     * Converts a table to CSV format.
      *
      * @protected
      */
@@ -90,11 +89,11 @@
       let cd = exports.csv.col_delimiter;
 
       // Find all the table data (td) elements.
-      let $rows = $(settings.source).find( 'tr:has( td )' );
+      let $rows = $(settings.source).find( "tr:has( td )" );
 
       let csv = '"' + $rows.map( function( i, row ) {
         let $row = $(row);
-        let $cols = $row.find( 'td' );
+        let $cols = $row.find( "td" );
 
         return $cols.map( function( j, col ) {
           let $col = $(col);
@@ -109,6 +108,11 @@
 
       this.download( csv, exports.csv );
     },
+    /**
+     * Converts a table to a JSON document.
+     *
+     * @protected
+     */
     json: function() {
       let plugin = this;
       let settings = plugin.settings;
@@ -117,16 +121,16 @@
       let headers = []
 
       // Find the headings for the json data map.
-      $.each( $(source).parent().find( 'thead > tr > th' ), function( i, j ) {
+      $.each( $(source).parent().find( "thead > tr > th" ), function( i, j ) {
         headers.push( $(j).text().toLowerCase() );
       });
 
       let json = [];
 
-      $.each( $(source).find( 'tr' ), function( k, v ) {
+      $.each( $(source).find( "tr" ), function( k, v ) {
         let row = {};
 
-        $.each( $(source).find( 'td' ), function( i, j ) {
+        $.each( $(source).find( "td" ), function( i, j ) {
           row[ headers[i] ] = $(this).text().trim();
         });
 
@@ -138,6 +142,29 @@
       this.download( json, exports.json );
     },
     /**
+     * Converts a table to an array.
+     */
+    /*
+    matrix: function() {
+      let plugin = this;
+      let settings = plugin.settings;
+      let source = settings.source;
+			let result = [];
+
+      $.each( $(source).find( "tr" ), function( k, v ) {
+        let row = [];
+
+				$.each( $(this).find( "td" ), function( i, j ) {
+					row.push( $(this).text() );
+				});
+
+        result.push( row );
+			});
+
+			return result;
+    },
+     */
+    /**
      * Submits the data to the browser.
      *
      * @param {object} data The data to transmit.
@@ -147,27 +174,27 @@
       let plugin = this;
       let settings = plugin.settings;
 
-      let href = '';
-      let target = '';
+      let href = "";
+      let target = "";
 
       if( window.Blob && window.URL ) {
         let blob = new Blob( [data], {
-          type: content_type.meda_type_text + '; charset=' + settings.charset
+          type: content_type.meda_type_text + "; charset=" + settings.charset
         });
 
         href = URL.createObjectURL( blob );
       }
       else {
         href =
-          'data:' + content_type.media_type_data +
-          '; charset=' + settings.charset +
-          ',' + encodeURIComponent( data );
+          "data:" + content_type.media_type_data +
+          "; charset=" + settings.charset +
+          "," + encodeURIComponent( data );
       }
 
       $(plugin.element).attr({
-        'download': settings.filename,
-        'href': href,
-        'target': target
+        "download": settings.filename,
+        "href": href,
+        "target": target
       });
     },
 

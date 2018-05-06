@@ -18,6 +18,9 @@
   /** @const */
   const APP_PREFERENCES = "ivy.preferences";
 
+  /** @const */
+  const APP_TIMESHEETS = "ivy.timesheets";
+
   // Schema editor: https://github.com/json-editor/json-editor
   let user_preferences_schema = {
     "description": "Controls for application behaviour.",
@@ -135,46 +138,6 @@
    */
   let ivy = $("#ivy tbody").ivy({
     /**
-     * @see user_preferences_schema
-     */
-    getDefaults: function() {
-      return {
-        "formats": {
-          "format_time": "hh:mm A",
-          "format_date": "YYYY-MM-DD",
-          "format_prec": 2
-        },
-        "weekdays": [{
-          "weekday": 1,
-          "times": [
-            {
-              "began": "745",
-              "ended": "930"
-            },
-            {
-              "began": "930",
-              "ended": "1000"
-            },
-            {
-              "began": "1000",
-              "ended": "345p"
-            }
-          ]},
-        ],
-        "inclusion": {
-          "weekends": false,
-          "holidays": false
-        },
-        "columns": ["Description"]
-      };
-    },
-    getPreferences: function() {
-      return localStorage.get( APP_PREFERENCES, this.getDefaults() );
-    },
-    setPreferences: function( prefs ) {
-      localStorage.put( APP_PREFERENCES, prefs );
-    },
-    /**
      * Called when the Ivy plugin is initialized.
      */
     init: function() {
@@ -245,20 +208,18 @@
     /**
      * Reads data from local storage and drops in the information by month.
      */
-    initTimesheet: function( month ) {
-      if( typeof month === "undefined" ) {
-        month = this.getCurrentMonth();
-      }
-
+    initTimesheet: function() {
       let self = this;
       let plugin = self.ivy;
       let prefs = self.getPreferences();
+      let date_format = prefs.formats.format_date;
+      let today = moment().format( 'YYYY-MM-01' );
+
       let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
       let $headers = $table.prev( "thead" ).find( "tr:first > th" );
 
       let html = "<tr>";
-      let date_format = prefs.formats.format_date;
 
       $headers.each( function( index ) {
         html += "<td";
@@ -547,6 +508,84 @@
       }
 
       return sum;
+    },
+    /**
+     * Returns the storage facility for timesheets and preferences. Must
+     * implement put and get methods to store and retrieve data.
+     */
+    getDataStore: function() {
+      return localStorage;
+    },
+    /**
+     * Called to put a key/value pair into storage.
+     */
+    put: function( key, value ) {
+      this.getDataStore().put( key, value );
+    },
+    /**
+     * Called to retrieve a value for a given key from storage.
+     */
+    get: function( key, defaultValue ) {
+      return this.getDataStore().get( key, defaultValue );
+    },
+    /**
+     * Returns the default set of timesheets for the application.
+     */
+    getDefaultTimesheets: function() {
+      return [ '"2018-05-01","07:45 AM","03:45 PM","8.00","8.00","Worked on free food distribution system."' ];
+    },
+    /**
+     * Returns user-defined timesheets data from storage.
+     */
+    getTimesheets: function() {
+      return this.get( APP_TIMESHEETS, this.getDefaultTimesheet() );
+    },
+    /**
+     * Saves a CSV file that represents user defined timesheets data to the
+     * data store.
+     */
+    setTimesheets: function( timesheets ) {
+      return this.put( APP_TIMESHEETS, timesheets );
+    },
+    /**
+     * @see user_preferences_schema
+     */
+    getDefaultPreferences: function() {
+      return {
+        "formats": {
+          "format_time": "hh:mm A",
+          "format_date": "YYYY-MM-DD",
+          "format_prec": 2
+        },
+        "weekdays": [{
+          "weekday": 1,
+          "times": [
+            {
+              "began": "745",
+              "ended": "930"
+            },
+            {
+              "began": "930",
+              "ended": "1000"
+            },
+            {
+              "began": "1000",
+              "ended": "345p"
+            }
+          ]},
+        ],
+        "inclusion": {
+          "weekends": false,
+          "holidays": false
+        },
+        "columns": ["Description"]
+      };
+    },
+    getPreferences: function() {
+      return this.get( APP_PREFERENCES, this.getDefaultPreferences() );
+    },
+    setPreferences: function( prefs ) {
+      this.put( APP_PREFERENCES, prefs );
     },
   });
 
