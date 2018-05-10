@@ -147,9 +147,25 @@
       this.fillTimesheet();
       this.initPreferencesDialog();
       this.initPreferencesEditor();
+      this.initSuperhero();
+      this.setChanged( false );
 
       // TODO: Initialize content based on preferences.
       //this.refreshCells();
+    },
+    /**
+     * Saves changes and saves upon an unload event (tab close, window close,
+     * navigate away, and such).
+     */
+    initSuperhero: function() {
+      let self = this;
+
+      $(window).on( 'unload', function() {
+        self.save();
+      });
+
+      // Save the application every 10 seconds.
+      setInterval( function() { self.save(); }, 1000 * 10 );
     },
     /**
      * Maps user-interface menu items to ivy function calls.
@@ -213,7 +229,9 @@
       let plugin = self.ivy;
       let prefs = self.getPreferences();
       let date_format = prefs.formats.format_date;
-      let today = moment().format( 'YYYY-MM-01' );
+      let month = moment().format( 'YYYY-MM-01' );
+
+      console.log( month );
 
       let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
@@ -380,6 +398,8 @@
 
         // Set the total for the day.
         $(plugin.getCell( indexes[0], COL_TOTAL )).text( sum );
+
+        this.setChanged( true );
       }
     },
     /**
@@ -508,6 +528,69 @@
       }
 
       return sum;
+    },
+    /**
+     * Returns the first day of the month in the year as marked by the
+     * cell in the first row of COL_DATED in YYYY-MM-01 format.
+     */
+    getMonth: function() {
+      return "2018-05-01";
+    },
+    getTimesheet: function() {
+      return "hello";
+    },
+    /**
+     * Maps the first day of the month in the current year to the set of
+     * values in the table as JSON. This can be used to efficiently store and
+     * retrieve the data for the month with an O(1) lookup.
+     *
+     * This assumes that the upper-left table cell contains the month and
+     * year.
+     */
+    monthly: function() {
+      let month = [];
+      
+      month.push({
+        month: this.getMonth(),
+        timesheet: this.getTimesheet()
+      });
+
+      return month;
+    },
+    /**
+     * Called at regular intervals to save the timesheet.
+     */
+    save: function() {
+      if( this.getChanged() ) {
+        this.setChanged( false );
+
+				let encoded = this.monthly().encode();
+				let decoded = encoded.decode();
+
+				console.log( encoded );
+				console.log( decoded );
+
+      }
+    },
+    /**
+     * Called to set the state of the changed flag, which is used when saving
+     * to determine if any action is required.
+     *
+     * @param {boolean} changed Set true when timesheet needs saving.
+     *
+     * @private
+     */
+    setChanged: function( changed ) {
+      this._changed = changed;
+    },
+    /**
+     * Returns the changed state, which is used to determine whether saving
+     * the timesheet is required.
+     *
+     * @private
+     */
+    getChanged: function() {
+      return this._changed;
     },
     /**
      * Returns the storage facility for timesheets and preferences. Must

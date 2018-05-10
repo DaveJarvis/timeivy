@@ -109,7 +109,7 @@
       this.download( csv, exports.csv );
     },
     /**
-     * Converts a table to a JSON document.
+     * Converts a table to JSON format.
      *
      * @protected
      */
@@ -141,29 +141,6 @@
 
       this.download( json, exports.json );
     },
-    /**
-     * Converts a table to an array.
-     */
-    /*
-    matrix: function() {
-      let plugin = this;
-      let settings = plugin.settings;
-      let source = settings.source;
-			let result = [];
-
-      $.each( $(source).find( "tr" ), function( k, v ) {
-        let row = [];
-
-				$.each( $(this).find( "td" ), function( i, j ) {
-					row.push( $(this).text() );
-				});
-
-        result.push( row );
-			});
-
-			return result;
-    },
-     */
     /**
      * Submits the data to the browser.
      *

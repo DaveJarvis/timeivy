@@ -25,9 +25,9 @@
   const MAX_INDEX = 1000;
 
   var defaults = {
-    classActiveCell:      "active",
-    classActiveCellInput: "edit",
-    classCellReadOnly:    "readonly",
+    classActiveCell:      PLUGIN_NAME + "-active",
+    classActiveCellInput: PLUGIN_NAME + "-editor",
+    classCellReadOnly:    PLUGIN_NAME + "-readonly",
     maxPageSize:          30,
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },

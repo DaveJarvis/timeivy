@@ -23,6 +23,28 @@ Object.equals = function( x, y ) {
 };
 
 /**
+ * Encodes an object into a single string that is suitable for compressing.
+ *
+ * @see http://erik.eae.net/archives/2005/06/06/22.13.54/
+ */
+Object.defineProperty( Object.prototype, 'encode', {
+  value: function() {
+    return encodeURIComponent( JSON.stringify( this ) );
+  }
+});
+
+/**
+ * Decodes an object from a string previously encoded with encode.
+ *
+ * @see http://erik.eae.net/archives/2005/06/06/22.13.54/
+ */
+Object.defineProperty( Object.prototype, 'decode', {
+  value: function() {
+    return JSON.parse( decodeURIComponent( this ) );
+  }
+});
+
+/**
  * Returns the next item that will be popped off the stack, or "undefined" if
  * there are no items in the array.
  */
@@ -120,7 +142,7 @@ String.prototype.toTime = function() {
  * @param {object} value The value associated with the given key name.
  */
 Storage.prototype.put = function( key, value ) {
-  this.setItem( key, LZString.compressToUTF16( value ) );
+  this.setItem( key, LZString.compressToUTF16( value.encode() ) );
 };
 
 /**
@@ -133,6 +155,8 @@ Storage.prototype.put = function( key, value ) {
 Storage.prototype.get = function( key, default_value ) {
   let value = this.getItem( key );
 
-  return value === null ? default_value : LZString.decompressFromUTF16( value );
+  return value === null
+    ? default_value
+    : LZString.decompressFromUTF16( value ).decode();
 };
 

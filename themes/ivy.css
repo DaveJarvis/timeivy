@@ -61,7 +61,7 @@ table.ivy td {
 /**
  * Show items as disabled.
  */
-table.ivy .readonly {
+table.ivy .ivy-readonly {
   color: gray;
 }
 
@@ -71,7 +71,7 @@ table.ivy .readonly {
  * row and individual cell, setting the border for the active cell here
  * ensures that all of its edges appear properly.
  */
-table.ivy td.active {
+table.ivy td.ivy-active {
   background-color: rgba( 0, 0, 0, 0.1 );
   border: 1px solid black;
 }
@@ -79,7 +79,7 @@ table.ivy td.active {
 /**
  * Glowing pale cerulean blue shadow during editing.
  */
-table.ivy td.edit {
+table.ivy td.ivy-editor {
   box-shadow: 0 0 4px rgb( 152, 180, 212 );
   border: 1px solid rgb( 152, 180, 212 );
 }
