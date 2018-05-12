@@ -79,7 +79,7 @@
      *
      * @protected
      */
-    csv: function() {
+    export_csv: function() {
       let plugin = this;
       let settings = plugin.settings;
       let exports = settings.exports;
@@ -106,6 +106,18 @@
       .split( trd ).join( rd )
       .split( tcd ).join( cd ) + '"';
 
+      return csv;
+    },
+    /**
+     * Converts a table to CSV format and sends to browser for download.
+     *
+     * @protected
+     */
+    csv: function() {
+      let plugin = this;
+      let settings = plugin.settings;
+      let exports = settings.exports;
+      let csv = this.export_csv();
       this.download( csv, exports.csv );
     },
     /**
@@ -113,10 +125,9 @@
      *
      * @protected
      */
-    json: function() {
+    export_json: function() {
       let plugin = this;
       let settings = plugin.settings;
-      let exports = settings.exports;
       let source = settings.source;
       let headers = []
 
@@ -137,8 +148,18 @@
         json.push( row );
       });
 
-      json = JSON.stringify( json );
-
+      return JSON.stringify( json );
+    },
+    /**
+     * Converts a table to JSON format and sends to browser for download.
+     *
+     * @protected
+     */
+    json: function() {
+      let plugin = this;
+      let settings = plugin.settings;
+      let exports = settings.exports;
+      let json = this.export_json();
       this.download( json, exports.json );
     },
     /**
@@ -173,14 +194,6 @@
         "href": href,
         "target": target
       });
-    },
-
-    /**
-     * Called to import the given CSV file into the table.
-     *
-     * @protected
-     */
-    table_import: function() {
     },
   });
 

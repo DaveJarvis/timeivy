@@ -19,16 +19,22 @@
   const APP_PREFERENCES = "ivy.preferences";
 
   /** @const */
-  const APP_TIMESHEETS = "ivy.timesheets";
+  const APP_FORMAT_ACTIVE = "YYYY-MM-DD";
 
   // Schema editor: https://github.com/json-editor/json-editor
   let user_preferences_schema = {
-    "description": "Controls for application behaviour.",
+    "description": "Control application behaviour.",
     "title": "Preferences",
     "type": "object",
     "properties": {
+      "active": {
+        "description": "Edit timesheet data for this month.",
+        "type": "string",
+        "format": "date",
+        "title": "Active Month",
+      },
       "weekdays": {
-        "description": "Rows added when inserting new days.",
+        "description": "Predefine daily timeslots.",
         "type": "array",
         "title": "Weekdays",
         "format": "table",
@@ -63,12 +69,10 @@
                   "began": {
                     "type": "string",
                     "title": "Began",
-                    "default": "08:00 AM",
                   },
                   "ended": {
                     "type": "string",
                     "title": "Ended",
-                    "default": "04:00 PM",
                   },
                 },
               },
@@ -76,30 +80,8 @@
           },
         },
       },
-      "formats": {
-        "description": "Timesheet display formats, change with caution.",
-        "title": "Format",
-        "type": "object",
-        "properties": {
-          "format_time": {
-            "type": "string",
-            "title": "Time",
-            "default": "HH:mm A",
-          },
-          "format_date": {
-            "type": "string",
-            "title": "Date",
-            "default": "YYYY-MMM-DD",
-          },
-          "format_prec": {
-            "type": "integer",
-            "title": "Precision",
-            "default": 2,
-          },
-        },
-      },
       "inclusion": {
-        "description": "Include these upon day insertion.",
+        "description": "Change what types of days are included.",
         "type": "object",
         "title": "Include",
         "properties": {
@@ -107,18 +89,29 @@
             "type": "boolean",
             "title": "Weekends",
             "format": "checkbox",
-            "default": false,
           },
           "holidays": {
             "type": "boolean",
             "title": "Holidays",
             "format": "checkbox",
-            "default": false,
+          },
+        },
+      },
+      "saving": {
+        "description": "Change timesheet persistence behaviour.",
+        "type": "object",
+        "title": "Saving",
+        "properties": {
+          "timeout": {
+            "description": "Time between autosaves, in seconds.",
+            "type": "integer",
+            "title": "Autosave",
+            "format": "number",
           },
         },
       },
       "columns": {
-        "description": "Extra columns to help organize data.",
+        "description": "Columns for custom purposes (e.g. ticket number).",
         "type": "array",
         "title": "Columns",
         "format": "tabs",
@@ -126,6 +119,37 @@
         "items": {
           "type": "string",
           "title": "Column",
+        },
+      },
+      "formats": {
+        "description": "Timesheet data formats; changing these can break the application.",
+        "title": "Format",
+        "type": "object",
+        "properties": {
+          "format_date": {
+            "description": "Format for timesheet day cells.",
+            "type": "string",
+            "title": "Date",
+            "default": "YYYY-MM-DD",
+          },
+          "format_time": {
+            "description": "Format for timesheet time cells.",
+            "type": "string",
+            "title": "Time",
+            "default": "HH:mm A",
+          },
+          "format_prec": {
+            "description": "Decimal places to show for time calculations.",
+            "type": "integer",
+            "title": "Precision",
+            "default": 2,
+          },
+          "format_keys": {
+            "description": "Internal format used as timesheet key index for local data storage.",
+            "type": "string",
+            "title": "Primary Key",
+            "default": "YYYYMM",
+          },
         },
       },
     },
@@ -154,20 +178,6 @@
       //this.refreshCells();
     },
     /**
-     * Saves changes and saves upon an unload event (tab close, window close,
-     * navigate away, and such).
-     */
-    initSuperhero: function() {
-      let self = this;
-
-      $(window).on( 'unload', function() {
-        self.save();
-      });
-
-      // Save the application every 10 seconds.
-      setInterval( function() { self.save(); }, 1000 * 10 );
-    },
-    /**
      * Maps user-interface menu items to ivy function calls.
      */
     initMenu: function() {
@@ -192,12 +202,12 @@
         });
       }
 
-      $(".ivy-export-csv").exportable({
+      self._exporter_csv = $(".ivy-export-csv").exportable({
         source: plugin.element,
         filename: "timesheet.csv"
       });
 
-      $(".ivy-export-json").exportable({
+      self._exporter_json = $(".ivy-export-json").exportable({
         source: plugin.element,
         filename: "timesheet.json"
       });
@@ -229,9 +239,7 @@
       let plugin = self.ivy;
       let prefs = self.getPreferences();
       let date_format = prefs.formats.format_date;
-      let month = moment().format( 'YYYY-MM-01' );
-
-      console.log( month );
+      let month = moment().format( prefs.formats.format_keys );
 
       let classReadOnly = plugin.settings.classCellReadOnly;
       let $table = $(plugin.getTableBodyElement());
@@ -321,12 +329,19 @@
       });
     },
     /**
-     * Returns the month for the current date.
-     *
-     * @return {number} A number from 0 (Jan) to 11 (Dec).
+     * Saves changes and saves upon an unload event (tab close, window close,
+     * navigate away, and such).
      */
-    getCurrentMonth: function() {
-      return moment().month();
+    initSuperhero: function() {
+      let self = this;
+      let prefs = self.getPreferences();
+
+      $(window).on( 'unload', function() {
+        self.save();
+      });
+
+      // Save the application every so often.
+      setInterval( function() { self.save(); }, 1000 * prefs.saving.timeout );
     },
     /**
      * Returns the day after the given day, taking into consideration
@@ -507,7 +522,7 @@
 
       let endedIndex = iterator - 1;
 
-      return [ beginIndex, endedIndex ];
+      return [beginIndex, endedIndex];
     },
     /**
      * Given a start and end index, this computes the total number of hours
@@ -528,49 +543,6 @@
       }
 
       return sum;
-    },
-    /**
-     * Returns the first day of the month in the year as marked by the
-     * cell in the first row of COL_DATED in YYYY-MM-01 format.
-     */
-    getMonth: function() {
-      return "2018-05-01";
-    },
-    getTimesheet: function() {
-      return "hello";
-    },
-    /**
-     * Maps the first day of the month in the current year to the set of
-     * values in the table as JSON. This can be used to efficiently store and
-     * retrieve the data for the month with an O(1) lookup.
-     *
-     * This assumes that the upper-left table cell contains the month and
-     * year.
-     */
-    monthly: function() {
-      let month = [];
-      
-      month.push({
-        month: this.getMonth(),
-        timesheet: this.getTimesheet()
-      });
-
-      return month;
-    },
-    /**
-     * Called at regular intervals to save the timesheet.
-     */
-    save: function() {
-      if( this.getChanged() ) {
-        this.setChanged( false );
-
-				let encoded = this.monthly().encode();
-				let decoded = encoded.decode();
-
-				console.log( encoded );
-				console.log( decoded );
-
-      }
     },
     /**
      * Called to set the state of the changed flag, which is used when saving
@@ -612,33 +584,71 @@
       return this.getDataStore().get( key, defaultValue );
     },
     /**
-     * Returns the default set of timesheets for the application.
+     * Returns user-defined timesheet data from storage for the month being
+     * edited (as set in the preferences).
+     *
+     * @return {object} The timesheet data stored against the month key,
+     * possibly undefined.
      */
-    getDefaultTimesheets: function() {
-      return [ '"2018-05-01","07:45 AM","03:45 PM","8.00","8.00","Worked on free food distribution system."' ];
-    },
-    /**
-     * Returns user-defined timesheets data from storage.
-     */
-    getTimesheets: function() {
-      return this.get( APP_TIMESHEETS, this.getDefaultTimesheet() );
+    loadTimesheet: function() {
+      let month = this.getTimesheetKey();
+      let timesheet = this.get( key );
+
+      console.log( month );
+      console.log( timesheet );
     },
     /**
      * Saves a CSV file that represents user defined timesheets data to the
      * data store.
      */
-    setTimesheets: function( timesheets ) {
-      return this.put( APP_TIMESHEETS, timesheets );
+    saveTimesheet: function() {
+      let month = this.getTimesheetKey();
+      let timesheet = this.getTimesheetData();
+
+      console.log( month );
+      console.log( timesheet );
+
+      //return this.put( key, value );
+    },
+    /**
+     * Returns the key that represents the month being edited. This value
+     * is set in the prefereces.
+     */
+    getTimesheetKey: function() {
+      let prefs = this.getPreferences();
+      let active = moment( prefs.active, APP_FORMAT_ACTIVE );
+      let key = active.format( prefs.formats.format_keys );
+
+      return key;
+    },
+    /**
+     *
+     */
+    getTimesheetData: function() {
+      return "hello, world";
+    },
+    /**
+     * Called at regular intervals to save the timesheet.
+     */
+    save: function() {
+      if( this.getChanged() ) {
+        // Try to avoid concurrent saves by clearing the dirty flag first.
+        this.setChanged( false );
+
+        this.saveTimesheet();
+      }
     },
     /**
      * @see user_preferences_schema
      */
     getDefaultPreferences: function() {
       return {
+        "active": moment().format( "YYYY-MM-01" ),
         "formats": {
+          "format_date": APP_FORMAT_ACTIVE,
           "format_time": "hh:mm A",
-          "format_date": "YYYY-MM-DD",
-          "format_prec": 2
+          "format_prec": 2,
+          "format_keys": "YYYYMM",
         },
         "weekdays": [{
           "weekday": 1,
@@ -657,6 +667,9 @@
             }
           ]},
         ],
+        "saving": {
+          "timeout": 5,
+        },
         "inclusion": {
           "weekends": false,
           "holidays": false
