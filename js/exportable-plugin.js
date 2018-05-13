@@ -77,7 +77,7 @@
     /**
      * Converts a table to CSV format.
      *
-     * @protected
+     * @public
      */
     export_csv: function() {
       let plugin = this;
@@ -123,7 +123,8 @@
     /**
      * Converts a table to JSON format.
      *
-     * @protected
+     * @return {object} A JSON string.
+     * @public
      */
     export_json: function() {
       let plugin = this;

@@ -181,8 +181,7 @@
      * Maps user-interface menu items to ivy function calls.
      */
     initMenu: function() {
-      let self = this;
-      let plugin = self.ivy;
+      let plugin = this.getPlugin();
 
       let ui = [
         { a: "edit-cut",     f: "Cut" },
@@ -202,12 +201,12 @@
         });
       }
 
-      self._exporter_csv = $(".ivy-export-csv").exportable({
+      this._exporter_csv = $(".ivy-export-csv").exportable({
         source: plugin.element,
         filename: "timesheet.csv"
       });
 
-      self._exporter_json = $(".ivy-export-json").exportable({
+      this._exporter_json = $(".ivy-export-json").exportable({
         source: plugin.element,
         filename: "timesheet.json"
       });
@@ -216,7 +215,7 @@
      * Called to insert headings based on user's preferences.
      */
     initHeadings: function() {
-      let plugin = this.ivy;
+      let plugin = this.getPlugin();
       let $table = $(plugin.getTableBodyElement());
       let $head = $table.prev( "thead" ).find( "tr:first" );
 
@@ -236,7 +235,7 @@
      */
     initTimesheet: function() {
       let self = this;
-      let plugin = self.ivy;
+      let plugin = self.getPlugin();
       let prefs = self.getPreferences();
       let date_format = prefs.formats.format_date;
       let month = moment().format( prefs.formats.format_keys );
@@ -370,7 +369,7 @@
      * Calculates shifts and totals for each day.
      */
     refreshCells: function() {
-      let plugin = this.ivy;
+      let plugin = this.getPlugin();
       let MAX_ROWS = plugin.getMaxRows();
 
       for( let row = 0; row <= MAX_ROWS; row++ ) {
@@ -394,7 +393,7 @@
      */
     onCellValueChangeAfter: function( row, col ) {
       if( col === COL_BEGAN || col === COL_ENDED ) {
-        let plugin = this.ivy;
+        let plugin = this.getPlugin();
         let prefs = this.getPreferences();
         let began = this.updateCellTime( row, COL_BEGAN );
         let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
@@ -425,7 +424,7 @@
      * @param {object} $clone The clone inserted after the given row.
      */
     onRowInsertAfter: function( $row, $clone ) {
-      let plugin = this.ivy;
+      let plugin = this.getPlugin();
       let ended = $clone.find( "td:eq(" + COL_ENDED + ")" ).text();
 
       $clone.find( "td:not(:first-child)" ).empty();
@@ -448,7 +447,6 @@
      * @param {object} $clone The clone appended to the table.
      */
     onRowAppendAfter: function( $row, $clone ) {
-      let plugin = this.ivy;
       let $date = $clone.find( "td:first" );
       let day = moment( $date.text() );
       let m1 = day.month();
@@ -468,7 +466,7 @@
         $row.remove();
       }
 
-      plugin.refreshCells();
+      this.getPlugin().refreshCells();
     },
     /**
      * Called to ensure the cell at the given row and column has a valid
@@ -481,7 +479,7 @@
      * @return {object} The moment object for the time at the given cell.
      */
     updateCellTime: function( row, col, defaultTime, defaultIncrement ) {
-      let plugin = this.ivy;
+      let plugin = this.getPlugin();
       let prefs = this.getPreferences();
       let $cell = $(plugin.getCell( row, col ));
       let time = $cell.text();
@@ -499,7 +497,7 @@
      * Returns the first and last row for a consecutive series of equal values.
      */
     findConsecutive: function( row, col ) {
-      let plugin = this.ivy;
+      let plugin = this.getPlugin();
       let iterator = row;
       let comparator = $(plugin.getCell( row, col )).text();
       let comparand = comparator;
@@ -529,7 +527,7 @@
      * over all shifts in each day.
      */
     sumConsecutive: function( indexes ) {
-      let plugin = this.ivy;
+      let plugin = this.getPlugin();
       let prefs = this.getPreferences();
       let sum = 0;
 
@@ -683,6 +681,9 @@
     setPreferences: function( prefs ) {
       this.put( APP_PREFERENCES, prefs );
     },
+    getPlugin: function() {
+      return this.ivy;
+    }
   });
 
   var extensions = {
