@@ -45,7 +45,7 @@
   function Plugin( element, options ) {
     this.element = element;
 
-    this.settings = $.extend({}, defaults, options );
+    this.settings = $.extend( {}, defaults, options );
     this._defaults = defaults;
     this._name = PLUGIN_NAME;
     this.init();
@@ -77,9 +77,11 @@
     /**
      * Converts a table to CSV format.
      *
+     * @param {string} excludeClass Table data elements of this class are
+     * excluded from the output.
      * @public
      */
-    export_csv: function() {
+    export_csv: function( excludeClass ) {
       let plugin = this;
       let settings = plugin.settings;
       let exports = settings.exports;
@@ -89,11 +91,11 @@
       let cd = exports.csv.col_delimiter;
 
       // Find all the table data (td) elements.
-      let $rows = $(settings.source).find( "tr:has( td )" );
+      let $rows = $(settings.source).find( "tr:has(td)" );
 
       let csv = '"' + $rows.map( function( i, row ) {
         let $row = $(row);
-        let $cols = $row.find( "td" );
+        let $cols = $row.find( "td:not('" + excludeClass + "')" );
 
         return $cols.map( function( j, col ) {
           let $col = $(col);

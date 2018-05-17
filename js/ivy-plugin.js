@@ -25,9 +25,10 @@
   const MAX_INDEX = 1000;
 
   var defaults = {
-    classActiveCell:      PLUGIN_NAME + "-active",
-    classActiveCellInput: PLUGIN_NAME + "-editor",
+    classCellActive:      PLUGIN_NAME + "-active",
+    classCellActiveInput: PLUGIN_NAME + "-editor",
     classCellReadOnly:    PLUGIN_NAME + "-readonly",
+    classCellComputed:    PLUGIN_NAME + "-expr",
     maxPageSize:          30,
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
@@ -487,7 +488,7 @@
       this.setCellCol( this.getCellCol() );
 
       let $cell = $(this.getActiveCell());
-      $cell.addClass( this.settings.classActiveCell );
+      $cell.addClass( this.settings.classCellActive );
     },
     /**
      * Primitive to remove the active class from the table cell represented by
@@ -498,7 +499,7 @@
      */
     deactivate: function() {
       let $cell = $(this.getActiveCell());
-      $cell.removeClass( this.settings.classActiveCell );
+      $cell.removeClass( this.settings.classCellActive );
     },
     /**
      * Returns the state of the plugin, which can be restored using the
@@ -775,7 +776,7 @@
      * @private
      */
     cellInputCreate: function( $cell, charCode ) {
-      $cell.addClass( this.settings.classActiveCellInput );
+      $cell.addClass( this.settings.classCellActiveInput );
 
       let cellWidth = $cell.width();
       let cellValue = charCode ? charCode : $cell.text();
@@ -852,7 +853,7 @@
         let cellValue = plugin.cellInputDestroy();
         let $cell = $(plugin.getActiveCell());
 
-        $cell.removeClass( plugin.settings.classActiveCellInput );
+        $cell.removeClass( plugin.settings.classCellActiveInput );
 
         plugin.setActiveCellValue( cellValue );
         plugin.focus();
