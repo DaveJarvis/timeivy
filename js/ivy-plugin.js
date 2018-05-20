@@ -105,6 +105,13 @@
     onCellValueChangeAfter: function( row, col ) {
     },
     /**
+     * Called after a row is duplicated.
+     *
+     * @param {object} $clone The clone inserted after the given row.
+     */
+    onRowDuplicateAfter: function( $clone ) {
+    },
+    /**
      * Called after a row is inserted.
      *
      * @param {object} $row The row used as the template for the clone.
@@ -376,7 +383,7 @@
      * @protected
      */
     setCellRow: function( row ) {
-      this._cell[0] = this._sanitizeCellIndex( row, this.getMaxRows() );
+      this._cell[ 0 ] = this._sanitizeCellIndex( row, this.getMaxRows() );
     },
     /**
      * Primitive to change the cell column without updating the user interface.
@@ -388,7 +395,7 @@
      * @protected
      */
     setCellCol: function( col ) {
-      this._cell[1] = this._sanitizeCellIndex( col, this.getMaxCols() );
+      this._cell[ 1 ] = this._sanitizeCellIndex( col, this.getMaxCols() );
     },
     /**
      * Primitive to get the table cell at the given row and column. The row
@@ -400,7 +407,6 @@
      * @public
      */
     getCell: function( row, col ) {
-      let plugin = this;
       let table = this.getTableBodyElement();
 
       return table.rows[ row ].cells[ col ];
@@ -454,6 +460,15 @@
       let max = table.rows[ MIN_INDEX ].cells.length - 1;
 
       return max;
+    },
+    /**
+     * Answers whether the table has any rows with data to edit.
+     *
+     * @return true The table has rows.
+     */
+    isActive: function() {
+      let table = this.getTableBodyElement();
+      return table.rows.length > 0;
     },
     isActiveCell: function( row, col ) {
       return this.isActiveCellRow( row ) && this.isActiveCellCol( col );
@@ -943,12 +958,22 @@
       this.execute( new CommandDeleteColumn( this, name ) );
     },
     /**
-     * Inserts a new row before the active cell row.
+     * Duplicates the active cell row and inserts it immediately after.
      *
      * @public
      */
     editDuplicateRow: function() {
       this.execute( new CommandDuplicateRow( this ) );
+    },
+    /**
+     * Duplicates the active cell row and inserts it immediately after.
+     *
+     * @param {array} data The columnar data to insert.
+     * @param {array} classes The cell classes per column.
+     * @public
+     */
+    editInsertRow: function( data, classes ) {
+      this.execute( new CommandInsertRow( this, data, classes ) );
     },
     /**
      * Removes the existing row for the active cell row.
@@ -989,12 +1014,11 @@
     /**
      * Called after a row is inserted.
      *
-     * @param {object} $row The row used as the template for the clone.
      * @param {object} $clone The clone inserted after the given row.
      * @public
      */
-    onRowInsertAfter: function( $row, $clone ) {
-      this.settings.onRowInsertAfter( $row, $clone );
+    onRowDuplicateAfter: function( $clone ) {
+      this.settings.onRowDuplicateAfter( $clone );
     },
     /**
      * Called by a command after a new row is appended.
@@ -1122,6 +1146,7 @@
      * user navigates to the same cell using different key combinations.
      *
      * @return {boolean} True when the states are the same.
+     * @public
      */
     equals( that ) {
       return typeof that === "undefined" ?
@@ -1131,6 +1156,8 @@
 
     /**
      * Restore's the previously saved cell state.
+     *
+     * @public
      */
     undo() {
       let plugin = this.getPlugin();
@@ -1139,6 +1166,8 @@
 
     /**
      * Returns a unique identifier for the command's state.
+     *
+     * @protected
      */
     getId() {
       return (new Date()).getTime();
@@ -1146,6 +1175,8 @@
 
     /**
      * Stashes the plugin's state so that undo can be called upon it later.
+     *
+     * @protected
      */
     saveState() {
       this.setState( this.getPlugin().cellStateRetrieve() );
@@ -1251,6 +1282,8 @@
 
       let $body = $(plugin.getTableBodyElement()).parent().find( "thead" );
 
+      // TODO: Append the column.
+
       plugin.activate();
     }
   }
@@ -1282,7 +1315,7 @@
       let $row = this.getRow();
       
       $row.after( $clone );
-      this.getPlugin().onRowInsertAfter( $row, $clone );
+      this.getPlugin().onRowDuplicateAfter( $clone );
     }
 
     /**
@@ -1295,6 +1328,56 @@
     getRow() {
       let $cell = $(this.getPlugin().getActiveCell());
       return $cell.closest( "tr" );
+    }
+  }
+
+  /**
+   * Inserts a new row immediately after the active cell's row. This does not
+   * move the active cell.
+   */
+  class CommandInsertRow extends CommandDuplicateRow {
+    /**
+     * @param {object} data The data to insert as a new row.
+     * @param {object} classes The classes to assign to the new row.
+     */
+    constructor( plugin, data, classes ) {
+      super( plugin );
+      this._data = data;
+      this._classes = classes;
+    }
+
+    saveState() {
+      let plugin = this.getPlugin();
+
+      // Only attempt to save the state if there is an active cell.
+      if( plugin.isActive() ) {
+        super.saveState();
+      }
+    }
+
+    execute() {
+      let plugin = this.getPlugin();
+
+      if( plugin.isActive() ) {
+        super.execute();
+      }
+      else {
+        // TODO: Insert very first row.
+        console.log( "insert first row" );
+      }
+    }
+
+    inject( $clone ) {
+      let plugin = this.getPlugin();
+
+      $.each( $clone.find( "td" ), function( index ) {
+        $(this).val( this._data[ index ] );
+        $(this).removeClass();
+        $(this).addClass( this._classes[ index ] );
+      });
+
+      $row.after( $clone );
+      this.getPlugin().onRowInsertAfter( $clone );
     }
   }
 

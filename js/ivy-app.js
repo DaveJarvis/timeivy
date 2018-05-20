@@ -246,6 +246,11 @@
       let $table = $(plugin.getTableBodyElement());
       let $headers = $table.prev( "thead" ).find( "tr:first > th" );
 
+      plugin.editInsertRow(
+        ["2018-05-02", "", "1.0", "7:45", "9:30", "Desc"],
+        [classReadOnly, classProtected, classProtected, "", "", ""]
+      );
+
       let html = "<tr>";
 
       $headers.each( function( index ) {
@@ -351,6 +356,13 @@
       setInterval( function() { self.save(); }, 1000 * prefs.saving.timeout );
     },
     /**
+     * Inserts a row having at least three values: the day, the
+     * began, and then ended times.
+     */
+    insertRow: function( row ) {
+      
+    },
+    /**
      * Returns the day after the given day, taking into consideration
      * the user's proferences for including weekends. This does not
      * mutate the given day, but returns a new day that will be advanced
@@ -436,10 +448,9 @@
      * Called after a row is inserted. This sets the begin time to the
      * end time of the previous row.
      *
-     * @param {object} $row The row used as the template for the clone.
      * @param {object} $clone The clone inserted after the given row.
      */
-    onRowInsertAfter: function( $row, $clone ) {
+    onRowDuplicateAfter: function( $clone ) {
       let plugin = this.getPlugin();
       let ended = $clone.find( "td:eq(" + COL_ENDED + ")" ).text();
 
