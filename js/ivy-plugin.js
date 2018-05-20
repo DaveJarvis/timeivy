@@ -28,7 +28,7 @@
     classCellActive:      PLUGIN_NAME + "-active",
     classCellActiveInput: PLUGIN_NAME + "-editor",
     classCellReadOnly:    PLUGIN_NAME + "-readonly",
-    classCellComputed:    PLUGIN_NAME + "-expr",
+    classCellProtected:   PLUGIN_NAME + "-protect",
     maxPageSize:          30,
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
@@ -55,9 +55,9 @@
       { k: 'ctrl+ins',     f: 'editCopy' },
       { k: 'del',          f: 'editErase' },
       { k: 'shift+del',    f: 'editDeleteRow' },
-      { k: 'ins',          f: 'editInsertRow' },
-      { k: 'ctrl+i',       f: 'editInsertRow' },
-      { k: 'command+i',    f: 'editInsertRow' },
+      { k: 'ins',          f: 'editDuplicateRow' },
+      { k: 'ctrl+i',       f: 'editDuplicateRow' },
+      { k: 'command+i',    f: 'editDuplicateRow' },
       { k: 'shift+space',  f: 'editAppendRow' },
 
       { k: 'ctrl+z',       f: 'editUndo' },
@@ -596,6 +596,7 @@
      * @protected
      */
     navigateRow: function( skip ) {
+      // TODO: Skip protected cells.
       this.navigate( this.getCellRow() + skip, this.getCellCol() );
     },
     /**
@@ -606,6 +607,7 @@
      * @protected
      */
     navigateCol: function( skip ) {
+      // TODO: Skip protected cells.
       this.navigate( this.getCellRow(), this.getCellCol() + skip );
     },
     /**
@@ -945,8 +947,8 @@
      *
      * @public
      */
-    editInsertRow: function() {
-      this.execute( new CommandInsertRow( this ) );
+    editDuplicateRow: function() {
+      this.execute( new CommandDuplicateRow( this ) );
     },
     /**
      * Removes the existing row for the active cell row.
@@ -1254,9 +1256,9 @@
   }
 
   /**
-   * Inserts a blank row after the active row.
+   * Copies the active row and inserts it after the active row.
    */
-  class CommandInsertRow extends Command {
+  class CommandDuplicateRow extends Command {
     constructor( plugin ) {
       super( plugin );
     }
@@ -1267,9 +1269,6 @@
 
       let $row = this.getRow();
       let $clone = $row.clone();
-
-      // Nuke the table data for this row.
-      $clone.find( "td" ).html( "" );
 
       // Uniquely identify the row so that multiple clones of the same row
       // will result in different states, and thereby join the undo stack.
@@ -1302,7 +1301,7 @@
   /**
    * Clones and appends the last row to the table.
    */
-  class CommandAppendRow extends CommandInsertRow {
+  class CommandAppendRow extends CommandDuplicateRow {
     constructor( plugin ) {
       super( plugin );
     }
@@ -1348,7 +1347,7 @@
      */
     undo() {
       let plugin = this.getPlugin();
-      plugin.editInsertRow();
+      plugin.editDeleteRow();
     }
   }
 

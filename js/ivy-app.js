@@ -130,7 +130,7 @@
             "description": "Format for timesheet day cells.",
             "type": "string",
             "title": "Date",
-            "default": "YYYY-MM-DD",
+            "default": APP_FORMAT_ACTIVE,
           },
           "format_time": {
             "description": "Format for timesheet time cells.",
@@ -162,7 +162,7 @@
    */
   let ivy = $("#ivy tbody").ivy({
     /**
-     * Called when the Ivy plugin is initialized.
+     * Called when Ivy is initialized.
      */
     init: function() {
       this.initMenu();
@@ -242,7 +242,7 @@
       let month = moment().format( prefs.formats.format_keys );
 
       let classReadOnly = plugin.settings.classCellReadOnly;
-      let classComputed = plugin.settings.classCellComputed;
+      let classProtected = plugin.settings.classCellProtected;
       let $table = $(plugin.getTableBodyElement());
       let $headers = $table.prev( "thead" ).find( "tr:first > th" );
 
@@ -255,7 +255,7 @@
           let classes = classReadOnly;
 
           if( [COL_SHIFT, COL_TOTAL].includes( index ) ) {
-            classes += " " + classComputed;
+            classes += " " + classProtected;
           }
 
           html += " class='" + classes + "'>";
@@ -368,6 +368,8 @@
       // Tue through Sat, with Sun/Mon as weekends.)
       do {
         d.add( 1, "day" );
+
+        // TODO: Take holidays into consideration.
       }
       while( (!prefs.inclusion.weekends) && d.toDate().isWeekend() );
 
@@ -398,6 +400,9 @@
     /**
      * Called after a cell value is changed. This computes the total number
      * of hours worked in a day.
+     *
+     * @param {number} row The row value that changed.
+     * @param {number} col The column value that changed.
      */
     onCellValueChangeAfter: function( row, col ) {
       // Trigger saving user-entered data.
@@ -405,6 +410,8 @@
         let plugin = this.getPlugin();
         let prefs = this.getPreferences();
         let began = this.updateCellTime( row, COL_BEGAN );
+
+        // TODO: Use a preference for the time jump.
         let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
         let delta = moment.duration( ended.diff( began ) );
         let hours = delta.asHours();
@@ -556,7 +563,6 @@
      * to determine if any action is required.
      *
      * @param {boolean} changed Set true when timesheet needs saving.
-     *
      * @private
      */
     setChanged: function( changed ) {
@@ -566,6 +572,8 @@
      * Returns the changed state, which is used to determine whether saving
      * the timesheet is required.
      *
+     * @return {boolean} Indicates whether the timesheet has been modified
+     * by the user.
      * @private
      */
     getChanged: function() {
@@ -574,6 +582,9 @@
     /**
      * Returns the storage facility for timesheets and preferences. Must
      * implement put and get methods to store and retrieve data.
+     *
+     * @return {object} A reference to the browser's local storage.
+     * @protected
      */
     getDataStore: function() {
       return localStorage;
@@ -581,14 +592,19 @@
     /**
      * Called to put a key/value pair into storage.
      *
-     * @param {string} key The timesheet year and month.
-     * @param {object} value The CSV string of all timesheet rows.
+     * @param {string} key The key to associate with the given value.
+     * @param {object} value The value to associate with the given key.
+     * @protected
      */
     put: function( key, value ) {
       this.getDataStore().put( key, value );
     },
     /**
      * Called to retrieve a value for a given key from storage.
+     *
+     * @param {string} key The key associated with the given value.
+     * @param {object} value The value associated with the given key.
+     * @protected
      */
     get: function( key, defaultValue ) {
       return this.getDataStore().get( key, defaultValue );
@@ -597,8 +613,7 @@
      * Returns user-defined timesheet data from storage for the month being
      * edited (as set in the preferences).
      *
-     * @return {object} The timesheet data stored against the month key,
-     * possibly undefined.
+     * @public
      */
     loadTimesheet: function() {
       let month = this.getTimesheetKey();
@@ -610,6 +625,8 @@
     /**
      * Saves a CSV file that represents user defined timesheets data to the
      * data store.
+     *
+     * @public
      */
     saveTimesheet: function() {
       let month = this.getTimesheetKey();
@@ -623,6 +640,9 @@
     /**
      * Returns the key that represents the month being edited. This value
      * is set in the prefereces.
+     *
+     * @return {object} The active year and month from user preferences.
+     * @public
      */
     getTimesheetKey: function() {
       let prefs = this.getPreferences();
@@ -632,33 +652,40 @@
       return key;
     },
     /**
-     * Stores all non-computed timesheet values in local storage.
+     * Retrieves timesheet values from local storage.
+     *
+     * @return {object} The timesheet data stored against the month key,
+     * @public
      */
     getTimesheetData: function() {
       let plugin = this.getPlugin();
-      let classComputed = plugin.settings.classCellComputed;
+      let classProtected = plugin.settings.classCellProtected;
       let exporter = this.getExporter();
 
       // Export the tabular data, excluding elements marked as computed.
       // When importing, all the table elements are refreshed.
-      let csv = exporter.export_csv( "." + classComputed );
+      let csv = exporter.export_csv( "." + classProtected );
 
       return csv;
     },
     /**
      * Returns the exporter used to slurp the table data.
+     *
+     * @return {object} The tabular data in CSV format.
+     * @public
      */
     getExporter: function() {
       return this._exporter_csv;
     },
     /**
      * Called at regular intervals to save the timesheet.
+     *
+     * @public
      */
     save: function() {
       if( this.getChanged() ) {
         // Avoid concurrent saves by clearing the dirty flag first.
         this.setChanged( false );
-
         this.saveTimesheet();
       }
     },
