@@ -27,7 +27,8 @@
   var defaults = {
     classCellActive:      PLUGIN_NAME + "-active",
     classCellActiveInput: PLUGIN_NAME + "-editor",
-    classCellProtected:   PLUGIN_NAME + "-protect",
+    classCellTransient:   PLUGIN_NAME + "-transient",
+    classCellReadOnly:    PLUGIN_NAME + "-readonly",
     maxPageSize:          30,
     dispatchKeysNavigate: [
       { k: 'enter',        f: 'navigateDown' },
@@ -503,10 +504,13 @@
      *
      * @return {boolean} True means the active cell has a read-only or
      * protected class.
+     * @public
      */
     isActiveCellProtected: function() {
       let $cell = $(this.getActiveCell());
-      return $cell.hasClass( this.settings.classCellProtected );
+
+      return $cell.hasClass( this.settings.classCellReadOnly ) ||
+        $cell.hasClass( this.settings.classCellTransient );
     },
     /**
      * Primitive to add the active class to the table cell represented by
@@ -885,7 +889,7 @@
       let edit = false;
 
       // Ensure edit mode is engaged before disabling edit mode.
-      if( $input !== false ) {
+      if( this.isEditing() ) {
         let plugin = this;
         let cellValue = plugin.cellInputDestroy();
         let $cell = $(plugin.getActiveCell());
@@ -902,6 +906,15 @@
       }
 
       return edit;
+    },
+    /**
+     * Returns true if the active cell is in edit mode.
+     *
+     * @return {boolean} False means that no editing is taking place.
+     * @public
+     */
+    isEditing: function() {
+      return this.getCellInput() !== false;
     },
     /**
      * Called when a new value is applied to the active cell.
@@ -1373,6 +1386,7 @@
 			let $headers = $table.prev( "thead" ).find( "tr:first > th" );
 			let html = "<tr>";
 
+      // The number of headers and tabular data must align.
 			$headers.each( function( index ) {
 				let content = self._content[ index ];
 				let classes = self._classes[ index ];
@@ -1383,16 +1397,12 @@
           html += " class='" + classes + "'";
         }
 
-        html += ">" + content;
-				html += "</td>";
+        html += ">" + content + "</td>";
 			});
 
 			html += "</tr>";
 
-      console.log( html );
       $table.append( html );
-
-      //plugin.onRowAppendAfter( $row );
     }
   }
 

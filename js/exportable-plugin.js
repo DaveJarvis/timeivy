@@ -75,10 +75,24 @@
       });
     },
     /**
+     * Returns the exclude class name as a jQuery CSS selector.
+     *
+     * @private
+     */
+    toSelector: function( element, excludeClass ) {
+      if( excludeClass === 'undefined' ) {
+        excludeClass = "";
+      }
+
+      let selector = element + ":not('" + excludeClass + "')";
+
+      return selector;
+    },
+    /**
      * Converts a table to CSV format.
      *
      * @param {string} excludeClass Table data elements of this class are
-     * excluded from the output.
+     * excluded from the output; if undefined, all columns are included.
      * @public
      */
     export_csv: function( excludeClass ) {
@@ -89,13 +103,14 @@
       let tcd = exports.csv.temp_col_delimiter;
       let rd = exports.csv.row_delimiter;
       let cd = exports.csv.col_delimiter;
+      let dataSelector = plugin.toSelector( "td", excludeClass );
 
       // Find all the table data (td) elements.
       let $rows = $(settings.source).find( "tr:has(td)" );
 
       let csv = '"' + $rows.map( function( i, row ) {
         let $row = $(row);
-        let $cols = $row.find( "td:not('" + excludeClass + "')" );
+        let $cols = $row.find( dataSelector );
 
         return $cols.map( function( j, col ) {
           let $col = $(col);
@@ -125,26 +140,30 @@
     /**
      * Converts a table to JSON format.
      *
+     * @param {string} excludeClass Table data elements of this class are
+     * excluded from the output; if undefined, all columns are included.
      * @return {object} A JSON string.
      * @public
      */
-    export_json: function() {
+    export_json: function( excludeClass ) {
       let plugin = this;
       let settings = plugin.settings;
       let source = settings.source;
-      let headers = []
+      let headers = [];
+      let th = "thead > tr > " + plugin.toSelector( "th", excludeClass );
+      let td = plugin.toSelector( "td", excludeClass );
 
       // Find the headings for the json data map.
-      $.each( $(source).parent().find( "thead > tr > th" ), function( i, j ) {
+      $.each( $(source).parent().find( th ), function( i, j ) {
         headers.push( $(j).text().toLowerCase() );
       });
 
       let json = [];
-
+      
       $.each( $(source).find( "tr" ), function( k, v ) {
         let row = {};
 
-        $.each( $(source).find( "td" ), function( i, j ) {
+        $.each( $(this).find( td ), function( i, j ) {
           row[ headers[i] ] = $(this).text().trim();
         });
 
@@ -198,6 +217,19 @@
         "target": target
       });
     },
+    /**
+     * Returns an array of comma-separated values. This function splits
+     * the given string at each end of line marker.
+     *
+     * @param content The string to split.
+     * @precondition content parameter was generated using the export function.
+     * @return {array} The given content split into an array of strings.
+     */
+    toArray: function( content ) {
+      let delim = this.settings.exports.csv.row_delimiter;
+
+      return content.split( delim );
+    }
   });
 
   $.fn[ PLUGIN_NAME ] = function( options ) {

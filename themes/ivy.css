@@ -59,9 +59,9 @@ table.ivy td {
 }
 
 /**
- * Show items as disabled.
+ * Show uneditable items greyed out as visual disabled cue.
  */
-table.ivy .ivy-protect {
+table.ivy td.ivy-transient, table.ivy td.ivy-readonly {
   color: gray;
 }
 

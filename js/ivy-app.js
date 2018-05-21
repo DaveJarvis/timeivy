@@ -167,16 +167,12 @@
     init: function() {
       this.initMenu();
       this.initHeadings();
-      this.loadTimesheet();
       this.initTimesheet();
       this.fillTimesheet();
       this.initPreferencesDialog();
       this.initPreferencesEditor();
       this.initSuperhero();
       this.setChanged( false );
-
-      // TODO: Initialize content based on preferences.
-      //this.refreshCells();
     },
     /**
      * Maps user-interface menu items to ivy function calls.
@@ -189,6 +185,7 @@
         { a: "edit-copy",    f: "Copy" },
         { a: "edit-undo",    f: "Undo" },
         { a: "edit-redo",    f: "Redo" },
+        { a: "insert-shift", f: "DuplicateRow" },
         { a: "delete-row",   f: "DeleteRow" },
         { a: "append-day",   f: "AppendRow" },
       ];
@@ -240,12 +237,51 @@
       let date_format = prefs.formats.format_date;
       let month = moment().format( prefs.formats.format_keys );
 
-      let cssProtected = plugin.settings.classCellProtected;
+      let cssTransient = plugin.settings.classCellTransient;
+      let cssReadOnly = plugin.settings.classCellReadOnly;
+      let timesheet = JSON.parse( this.loadTimesheet() );
+      let css = [];
 
-      plugin.editAppendRow(
-        ["2018-05-02", "", "", "7:45", "9:30", "Desc"],
-        [cssProtected, cssProtected, cssProtected, "", "", ""]
-      );
+      $.each( timesheet, function() {
+        let row = [];
+
+        row.push( this.day );
+        row.push( "" );
+        row.push( "" );
+        row.push( this.began.toTime() );
+        row.push( this.ended.toTime() );
+
+        delete this.day;
+        delete this.began;
+        delete this.ended;
+
+        // No need to recreate the CSS each time.
+        if( css.length === 0 ) {
+          css.push( cssReadOnly );
+          css.push( cssTransient );
+          css.push( cssTransient );
+
+          // The following values have no styles:
+          // * began (+1)
+          // * ended (+1)
+          // * all user-provided columns (+length)
+          let len = Object.keys( this ).length + 2;
+
+          for( let i = 0; i < len; i++ ) {
+            css.push( "" );
+          }
+        }
+
+        for( let k in this ) {
+          if( this.hasOwnProperty( k ) ) {
+            row.push( this[k] );
+          }
+        }
+
+        plugin.editAppendRow( row, css );
+      });
+
+      plugin.refreshCells();
     },
     /**
      * Fills out the month's remaining days according to user preferences.
@@ -435,7 +471,6 @@
      * month, if possible.
      *
      * @param {object} $row The row used as the template for the clone.
-     */
     onRowAppendAfter: function( $row ) {
       let $date = $row.find( "td:first" );
       let day = moment( $date.text() );
@@ -453,6 +488,7 @@
 
       this.getPlugin().refreshCells();
     },
+     */
     /**
      * Called to ensure the cell at the given row and column has a valid
      * time.
@@ -588,8 +624,7 @@
       let month = this.getTimesheetKey();
       let timesheet = this.get( month );
 
-      console.log( month );
-      console.log( timesheet );
+      return timesheet;
     },
     /**
      * Saves a CSV file that represents user defined timesheets data to the
@@ -625,23 +660,23 @@
      */
     getTimesheetData: function() {
       let plugin = this.getPlugin();
-      let classProtected = plugin.settings.classCellProtected;
+      let cssClass = plugin.settings.classCellTransient;
       let exporter = this.getExporter();
 
-      // Export the tabular data, excluding elements marked as computed.
+      // Export the tabular data, excluding elements marked as protected.
       // When importing, all the table elements are refreshed.
-      let csv = exporter.export_csv( "." + classProtected );
+      let exported = exporter.export_json( "." + cssClass );
 
-      return csv;
+      return exported;
     },
     /**
      * Returns the exporter used to slurp the table data.
      *
-     * @return {object} The tabular data in CSV format.
+     * @return {object} The tabular data in a machine-readable format.
      * @public
      */
     getExporter: function() {
-      return this._exporter_csv;
+      return this._exporter_json;
     },
     /**
      * Called at regular intervals to save the timesheet.
@@ -649,7 +684,9 @@
      * @public
      */
     save: function() {
-      if( this.getChanged() ) {
+      // TODO: Introspect the input field to get its value, if editing.
+      // This will prevent the race-condition that isEditing() avoids.
+      if( this.getChanged() && this.getPlugin().isEditing() === false ) {
         // Avoid concurrent saves by clearing the dirty flag first.
         this.setChanged( false );
         this.saveTimesheet();
