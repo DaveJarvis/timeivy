@@ -67,7 +67,7 @@
 
       // Extract filename extension.
       // https://stackoverflow.com/a/12900504/59087
-      let ext = filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+      let ext = filename.slice( (filename.lastIndexOf( "." ) - 1 >>> 0) + 2 );
 
       // Call the function that maps to the predetermined extension.
       $(plugin.element).on( "click tap", function( event ) {

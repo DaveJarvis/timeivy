@@ -61,7 +61,7 @@ table.ivy td {
 /**
  * Show items as disabled.
  */
-table.ivy .ivy-readonly {
+table.ivy .ivy-protect {
   color: gray;
 }
 

@@ -189,7 +189,6 @@
         { a: "edit-copy",    f: "Copy" },
         { a: "edit-undo",    f: "Undo" },
         { a: "edit-redo",    f: "Redo" },
-        { a: "insert-shift", f: "InsertRow" },
         { a: "delete-row",   f: "DeleteRow" },
         { a: "append-day",   f: "AppendRow" },
       ];
@@ -241,47 +240,12 @@
       let date_format = prefs.formats.format_date;
       let month = moment().format( prefs.formats.format_keys );
 
-      let classReadOnly = plugin.settings.classCellReadOnly;
-      let classProtected = plugin.settings.classCellProtected;
-      let $table = $(plugin.getTableBodyElement());
-      let $headers = $table.prev( "thead" ).find( "tr:first > th" );
+      let cssProtected = plugin.settings.classCellProtected;
 
-      plugin.editInsertRow(
-        ["2018-05-02", "", "1.0", "7:45", "9:30", "Desc"],
-        [classReadOnly, classProtected, classProtected, "", "", ""]
+      plugin.editAppendRow(
+        ["2018-05-02", "", "", "7:45", "9:30", "Desc"],
+        [cssProtected, cssProtected, cssProtected, "", "", ""]
       );
-
-      let html = "<tr>";
-
-      $headers.each( function( index ) {
-        html += "<td";
-
-        if( [COL_DATED, COL_SHIFT, COL_TOTAL].includes( index ) ) {
-          let classes = classReadOnly;
-
-          if( [COL_SHIFT, COL_TOTAL].includes( index ) ) {
-            classes += " " + classProtected;
-          }
-
-          html += " class='" + classes + "'>";
-
-          if( index === COL_DATED ) {
-            let day = moment().startOf( "month" ).subtract( 1, "day" );
-            day = self.getNextWorkDay( day );
-
-            html += day.format( date_format );
-          }
-        }
-        else {
-          html += ">";
-        }
-
-        html += "</td>";
-      });
-
-      html += "</tr>";
-
-      $table.append( html );
     },
     /**
      * Fills out the month's remaining days according to user preferences.
@@ -471,10 +435,9 @@
      * month, if possible.
      *
      * @param {object} $row The row used as the template for the clone.
-     * @param {object} $clone The clone appended to the table.
      */
-    onRowAppendAfter: function( $row, $clone ) {
-      let $date = $clone.find( "td:first" );
+    onRowAppendAfter: function( $row ) {
+      let $date = $row.find( "td:first" );
       let day = moment( $date.text() );
       let m1 = day.month();
 
@@ -486,11 +449,6 @@
       if( m1 === m2 ) {
         let prefs = this.getPreferences();
         $date.text( day.format( prefs.formats.format_date ) );
-      }
-      else {
-        // Remove the row because an attempt was made to insert
-        // a day beyond the end of the month.
-        $row.remove();
       }
 
       this.getPlugin().refreshCells();
@@ -643,9 +601,6 @@
       let month = this.getTimesheetKey();
       let timesheet = this.getTimesheetData();
 
-      console.log( month );
-      console.log( timesheet );
-
       this.put( month, timesheet );
     },
     /**
@@ -749,30 +704,5 @@
       return this.ivy;
     }
   });
-
-  var extensions = {
-    /**
-     * Appends the remaining days of the week in the month.
-     */
-    editAppendMonth: function() {
-      let plugin = this;
-      let rowIndex = plugin.getMaxRows();
-      let $cell = $(plugin.getCell( rowIndex, COL_DATED ));
-      let day = moment( $cell.text() );
-      let curr_month = day.month();
-
-      // Add append days until the month flips. Adding 1 day mutates the
-      // day instance.
-      while( curr_month === day.add( 1, "day" ).month() ) {
-        // Kicks off the weekend discriminator magic.
-        plugin.editAppendRow();
-
-        $cell = $(plugin.getCellLastRow( COL_DATED ));
-        day = moment( $cell.text() );
-      }
-    },
-  };
-
-  $.extend( true, ivy, extensions );
 });
 

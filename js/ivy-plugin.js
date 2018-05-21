@@ -27,7 +27,6 @@
   var defaults = {
     classCellActive:      PLUGIN_NAME + "-active",
     classCellActiveInput: PLUGIN_NAME + "-editor",
-    classCellReadOnly:    PLUGIN_NAME + "-readonly",
     classCellProtected:   PLUGIN_NAME + "-protect",
     maxPageSize:          30,
     dispatchKeysNavigate: [
@@ -464,29 +463,50 @@
     /**
      * Answers whether the table has any rows with data to edit.
      *
-     * @return true The table has rows.
+     * @return {boolean} True means the table has rows.
+     * @public
      */
     isActive: function() {
       let table = this.getTableBodyElement();
+
       return table.rows.length > 0;
     },
+    /**
+     * Answers whether the active cell is at the given row and column.
+     *
+     * @return {boolean} True means the row and column denote the active cell.
+     * @public
+     */
     isActiveCell: function( row, col ) {
       return this.isActiveCellRow( row ) && this.isActiveCellCol( col );
     },
+    /**
+     * Answers whether the active cell is at the given row.
+     *
+     * @return {boolean} True means the row equals the active cell's row.
+     * @public
+     */
     isActiveCellRow: function( row ) {
       return row === this.getCellRow();
     },
+    /**
+     * Answers whether the active cell is at the given column.
+     *
+     * @return {boolean} True means column equals the active cell's column.
+     * @public
+     */
     isActiveCellCol: function( col ) {
       return col === this.getCellCol();
     },
     /**
-     * Answers whether the active cell has a read-only class.
+     * Answers whether the active cell has a read-only or protected class.
      *
-     * @return {boolean} True means the active cell has a read-only class.
+     * @return {boolean} True means the active cell has a read-only or
+     * protected class.
      */
-    isActiveCellReadOnly: function() {
+    isActiveCellProtected: function() {
       let $cell = $(this.getActiveCell());
-      return $cell.hasClass( this.settings.classCellReadOnly );
+      return $cell.hasClass( this.settings.classCellProtected );
     },
     /**
      * Primitive to add the active class to the table cell represented by
@@ -780,7 +800,7 @@
     cellUpdate: function( cellValue ) {
       let plugin = this;
 
-      if( !plugin.isActiveCellReadOnly() ) {
+      if( !plugin.isActiveCellProtected() ) {
         plugin.execute( new CommandCellUpdate( this, cellValue ) );
       }
     },
@@ -848,7 +868,7 @@
     editStart: function( charCode ) {
       let plugin = this;
 
-      if( !plugin.isActiveCellReadOnly() ) {
+      if( !plugin.isActiveCellProtected() ) {
         plugin.execute( new CommandCellEditStart( plugin, charCode ) );
       }
     },
@@ -921,8 +941,6 @@
      * @protected
      */
     setActiveCellValueSilent: function( v ) {
-      console.log( "setActiveCellValueSilent " + v );
-
       if( v !== false ) {
         let plugin = this;
         let cell = plugin.getActiveCell();
@@ -966,16 +984,6 @@
       this.execute( new CommandDuplicateRow( this ) );
     },
     /**
-     * Duplicates the active cell row and inserts it immediately after.
-     *
-     * @param {array} data The columnar data to insert.
-     * @param {array} classes The cell classes per column.
-     * @public
-     */
-    editInsertRow: function( data, classes ) {
-      this.execute( new CommandInsertRow( this, data, classes ) );
-    },
-    /**
      * Removes the existing row for the active cell row.
      *
      * @public
@@ -991,8 +999,8 @@
      *
      * @public
      */
-    editAppendRow: function() {
-      this.execute( new CommandAppendRow( this ) );
+    editAppendRow: function( content, classes ) {
+      this.execute( new CommandAppendRow( this, content, classes ) );
     },
     /**
      * Un-executes the previously executed command.
@@ -1161,7 +1169,11 @@
      */
     undo() {
       let plugin = this.getPlugin();
-      plugin.cellStateRestore( this.getState() );
+      let state = this.getState();
+
+      if( typeof state !== 'undefined' ) {
+        plugin.cellStateRestore( this.getState() );
+      }
     }
 
     /**
@@ -1332,74 +1344,55 @@
   }
 
   /**
-   * Inserts a new row immediately after the active cell's row. This does not
-   * move the active cell.
+   * Appends a new row to the end of the table.
    */
-  class CommandInsertRow extends CommandDuplicateRow {
+  class CommandAppendRow extends Command {
     /**
-     * @param {object} data The data to insert as a new row.
+     * @param {object} content The data to insert as a new row.
      * @param {object} classes The classes to assign to the new row.
      */
-    constructor( plugin, data, classes ) {
+    constructor( plugin, content, classes ) {
       super( plugin );
-      this._data = data;
+      this._content = content;
       this._classes = classes;
     }
 
     saveState() {
       let plugin = this.getPlugin();
 
-      // Only attempt to save the state if there is an active cell.
+      // Only attempt to save the state if there is at least one row.
       if( plugin.isActive() ) {
         super.saveState();
       }
     }
 
     execute() {
-      let plugin = this.getPlugin();
+      let self = this;
+      let plugin = self.getPlugin();
+			let $table = $(plugin.getTableBodyElement());
+			let $headers = $table.prev( "thead" ).find( "tr:first > th" );
+			let html = "<tr>";
 
-      if( plugin.isActive() ) {
-        super.execute();
-      }
-      else {
-        // TODO: Insert very first row.
-        console.log( "insert first row" );
-      }
-    }
+			$headers.each( function( index ) {
+				let content = self._content[ index ];
+				let classes = self._classes[ index ];
 
-    inject( $clone ) {
-      let plugin = this.getPlugin();
+				html += "<td";
+        
+        if( classes.length > 0 ) {
+          html += " class='" + classes + "'";
+        }
 
-      $.each( $clone.find( "td" ), function( index ) {
-        $(this).val( this._data[ index ] );
-        $(this).removeClass();
-        $(this).addClass( this._classes[ index ] );
-      });
+        html += ">" + content;
+				html += "</td>";
+			});
 
-      $row.after( $clone );
-      this.getPlugin().onRowInsertAfter( $clone );
-    }
-  }
+			html += "</tr>";
 
-  /**
-   * Clones and appends the last row to the table.
-   */
-  class CommandAppendRow extends CommandDuplicateRow {
-    constructor( plugin ) {
-      super( plugin );
-    }
+      console.log( html );
+      $table.append( html );
 
-    inject( $clone ) {
-      let $row = this.getRow();
-      
-      $row.after( $clone );
-      this.getPlugin().onRowAppendAfter( $row, $clone );
-    }
-
-    getRow() {
-      let $body = $(this.getPlugin().getTableBodyElement());
-      let $cell = $body.find( "tr:last" );
-      return $cell;
+      //plugin.onRowAppendAfter( $row );
     }
   }
 
