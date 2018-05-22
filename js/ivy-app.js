@@ -306,6 +306,7 @@
           continue;
         }
 
+        // TODO: Insert times according to user preferences based on weekday.
         plugin.editAppendRow(
           [day.format(date_format), "", "", "8:00".toTime(), "9:00".toTime()],
           css
