@@ -72,7 +72,7 @@
       { k: 'shift+tab',    f: 'navigateLeft' },
       { k: 'tab',          f: 'navigateRight' },
 
-      { k: 'enter',        f: 'editStop' },
+      { k: 'enter',        f: 'editAccept' },
       { k: 'esc',          f: 'editCancel' },
     ],
     /**
@@ -917,6 +917,13 @@
       }
 
       return edit;
+    },
+    /**
+     * Called when the user presses Enter while editing a cell.
+     */
+    editAccept: function() {
+      this.editStop();
+      this.navigateDown();
     },
     /**
      * Returns true if the active cell is in edit mode.

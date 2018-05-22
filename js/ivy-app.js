@@ -298,6 +298,8 @@
       let next = day.clone().add( 1, "month" );
       let date_format = prefs.formats.format_date;
 
+      day.add( 1, "day" );
+
       while( day.month() < next.month() ) {
         if( !self.isWorkDay( day ) ) {
           day.add( 1, "day" );
