@@ -291,20 +291,28 @@
 
       let self = this;
       let plugin = self.getPlugin();
+      let prefs = self.getPreferences();
 
-      let cssTransient = plugin.settings.classCellTransient;
-      let cssReadOnly = plugin.settings.classCellReadOnly;
-      
-      let prefs = this.getPreferences();
+      let date = $(plugin.getCellLastRow( COL_DATED )).text();
+      let day = moment( date );
+      let next = day.clone().add( 1, "month" );
       let date_format = prefs.formats.format_date;
-      let month = moment().format( prefs.formats.format_keys );
 
-      plugin.editAppendRow(
-        ["2018-05-21", "", "", "8:00".toTime(), "9:00".toTime()],
-        [cssReadOnly, cssTransient, cssTransient, "", ""]
-      );
+      while( day.month() < next.month() ) {
+        if( !self.isWorkDay( day ) ) {
+          day.add( 1, "day" );
+          continue;
+        }
 
-      console.log( prefs.weekdays );
+        plugin.editAppendRow(
+          [day.format(date_format), "", "", "8:00".toTime(), "9:00".toTime()],
+          css
+        );
+
+        day = self.getNextWorkDay( day );
+      }
+
+      this.getPlugin().refreshCells();
     },
     /**
      * Initializes the UI dialog that contains the schema editor.
@@ -373,13 +381,23 @@
       setInterval( function() { self.save(); }, 1000 * prefs.saving.timeout );
     },
     /**
+     * Answers whether the given day is a work day.
+     */
+    isWorkDay: function( day ) {
+      let prefs = this.getPreferences();
+
+      return prefs.inclusion.weekends || (!day.toDate().isWeekend());
+    },
+    /**
      * Returns the day after the given day, taking into consideration
      * the user's proferences for including weekends. This does not
      * mutate the given day, but returns a new day that will be advanced
      * by 1, 2, or 3 days depending on weekend preferences.
      *
-     * @param {Object} day The momentjs date to advance by 1 day.
-     * @return {Object} A momentjs date instance advanced by n days.
+     * TODO: Take holidays into consideration.
+     *
+     * @param {object} day The momentjs date to advance by 1 day.
+     * @return {object} A momentjs date instance advanced by n days.
      */
     getNextWorkDay: function( day ) {
       let prefs = this.getPreferences();
@@ -390,10 +408,8 @@
       // Tue through Sat, with Sun/Mon as weekends.)
       do {
         d.add( 1, "day" );
-
-        // TODO: Take holidays into consideration.
       }
-      while( (!prefs.inclusion.weekends) && d.toDate().isWeekend() );
+      while( !this.isWorkDay( d ) );
 
       return d;
     },
@@ -433,7 +449,7 @@
         let prefs = this.getPreferences();
         let began = this.updateCellTime( row, COL_BEGAN );
 
-        // TODO: Use a preference for the time jump.
+        // TODO: Use a preference for the time jump (60).
         let ended = this.updateCellTime( row, COL_ENDED, began, 60 );
         let delta = moment.duration( ended.diff( began ) );
         let hours = delta.asHours();
@@ -451,6 +467,7 @@
         // Set the total for the day.
         $(plugin.getCell( indexes[0], COL_TOTAL )).text( sum );
 
+        // Enusre the changes are saved.
         this.setChanged( true );
       }
     },
@@ -497,6 +514,9 @@
           [cssReadOnly, cssTransient, cssTransient, "", ""]
         );
       }
+
+      // Ensure the totals are updated.
+      plugin.refreshCells();
     },
     /**
      * Called after a row is appended. This increments the day of the
