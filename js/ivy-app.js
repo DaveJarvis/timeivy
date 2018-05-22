@@ -19,7 +19,10 @@
   const APP_PREFERENCES = "ivy.preferences";
 
   /** @const */
-  const APP_FORMAT_ACTIVE = "YYYY-MM-DD";
+  const APP_DATE_FORMAT_ACTIVE = "YYYY-MM-DD";
+
+  /** @const */
+  const APP_DATE_FORMAT_FIRST = "YYYY-MM-01";
 
   // Schema editor: https://github.com/json-editor/json-editor
   let user_preferences_schema = {
@@ -130,7 +133,7 @@
             "description": "Format for timesheet day cells.",
             "type": "string",
             "title": "Date",
-            "default": APP_FORMAT_ACTIVE,
+            "default": APP_DATE_FORMAT_ACTIVE,
           },
           "format_time": {
             "description": "Format for timesheet time cells.",
@@ -168,7 +171,6 @@
       this.initMenu();
       this.initHeadings();
       this.initTimesheet();
-      this.fillTimesheet();
       this.initPreferencesDialog();
       this.initPreferencesEditor();
       this.initSuperhero();
@@ -233,9 +235,6 @@
     initTimesheet: function() {
       let self = this;
       let plugin = self.getPlugin();
-      let prefs = self.getPreferences();
-      let date_format = prefs.formats.format_date;
-      let month = moment().format( prefs.formats.format_keys );
 
       let cssTransient = plugin.settings.classCellTransient;
       let cssReadOnly = plugin.settings.classCellReadOnly;
@@ -251,6 +250,7 @@
         row.push( this.began.toTime() );
         row.push( this.ended.toTime() );
 
+        // Prevent adding CSS for keys that have fixed styles.
         delete this.day;
         delete this.began;
         delete this.ended;
@@ -281,13 +281,30 @@
         plugin.editAppendRow( row, css );
       });
 
-      plugin.refreshCells();
+      self.fillTimesheet( css );
     },
     /**
      * Fills out the month's remaining days according to user preferences.
      */
-    fillTimesheet: function() {
+    fillTimesheet: function( css ) {
+      console.log( "fill timesheet" );
+
+      let self = this;
+      let plugin = self.getPlugin();
+
+      let cssTransient = plugin.settings.classCellTransient;
+      let cssReadOnly = plugin.settings.classCellReadOnly;
       
+      let prefs = this.getPreferences();
+      let date_format = prefs.formats.format_date;
+      let month = moment().format( prefs.formats.format_keys );
+
+      plugin.editAppendRow(
+        ["2018-05-21", "", "", "8:00".toTime(), "9:00".toTime()],
+        [cssReadOnly, cssTransient, cssTransient, "", ""]
+      );
+
+      console.log( prefs.weekdays );
     },
     /**
      * Initializes the UI dialog that contains the schema editor.
@@ -354,13 +371,6 @@
 
       // Save the application every so often.
       setInterval( function() { self.save(); }, 1000 * prefs.saving.timeout );
-    },
-    /**
-     * Inserts a row having at least three values: the day, the
-     * began, and then ended times.
-     */
-    insertRow: function( row ) {
-      
     },
     /**
      * Returns the day after the given day, taking into consideration
@@ -465,6 +475,28 @@
       // total. Calling refresh here has a slight performance hit, but
       // it ensures the correct daily total.
       plugin.refreshCells();
+    },
+    /**
+     * After a row has been deleted, make sure that a row exists.
+     *
+     * @param {object} $row The row that was deleted.
+     */
+    onRowDeleteAfter: function( $row ) {
+      let plugin = this.getPlugin();
+      let rows = plugin.getRowCount();
+
+      if( rows === 0 ) {
+        let cssTransient = plugin.settings.classCellTransient;
+        let cssReadOnly = plugin.settings.classCellReadOnly;
+        let date = moment();
+        let day = this.getNextWorkDay( date ).format( APP_DATE_FORMAT_FIRST );
+
+        // TODO: Apply user preferences to fill in the new row.
+        plugin.editAppendRow(
+          [day, "", "", "8:00".toTime(), "9:00".toTime()],
+          [cssReadOnly, cssTransient, cssTransient, "", ""]
+        );
+      }
     },
     /**
      * Called after a row is appended. This increments the day of the
@@ -647,7 +679,7 @@
      */
     getTimesheetKey: function() {
       let prefs = this.getPreferences();
-      let active = moment( prefs.active, APP_FORMAT_ACTIVE );
+      let active = moment( prefs.active, APP_DATE_FORMAT_ACTIVE );
       let key = active.format( prefs.formats.format_keys );
 
       return key;
@@ -697,9 +729,9 @@
      */
     getDefaultPreferences: function() {
       return {
-        "active": moment().format( "YYYY-MM-01" ),
+        "active": moment().format( APP_DATE_FORMAT_FIRST ),
         "formats": {
-          "format_date": APP_FORMAT_ACTIVE,
+          "format_date": APP_DATE_FORMAT_ACTIVE,
           "format_time": "hh:mm A",
           "format_prec": 2,
           "format_keys": "YYYYMM",

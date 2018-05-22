@@ -8,18 +8,16 @@
   <meta name="description" content="Time tracking software for consultants."/>
   <title>Time Ivy</title>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" />
-  <!--
   <link rel="stylesheet" href="themes/simple.css"/>
   <link rel="stylesheet" href="themes/app.css"/>
   <link rel="stylesheet" href="themes/ivy.css"/>
-  -->
-  <link rel="stylesheet" href="themes/ivy.min.css"/>
-	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css" integrity="sha256-sEGfrwMkIjbgTBwGLVK38BG/XwIiNC/EAG9Rzsfda6A=" crossorigin="anonymous" />
-	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css" integrity="sha256-sEGfrwMkIjbgTBwGLVK38BG/XwIiNC/EAG9Rzsfda6A=" crossorigin="anonymous" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js" integrity="sha256-9YAuB2VnFZNJ+lKfpaQ3dKQT9/C0j3VUla76hHbiVF8=" crossorigin="anonymous"></script>
-  <script async src="//cdnjs.cloudflare.com/ajax/libs/mousetrap/1.6.1/mousetrap.min.js" integrity="sha256-z6XYkzzC5o+5PhoIPMpyq5FOZkWFGiWa0NFIDPJ57zU=" crossorigin="anonymous"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/mousetrap/1.6.1/mousetrap.min.js" integrity="sha256-z6XYkzzC5o+5PhoIPMpyq5FOZkWFGiWa0NFIDPJ57zU=" crossorigin="anonymous"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/json-editor/0.7.28/jsoneditor.min.js" integrity="sha256-51+oMmpgSgS4jV5/DcGKnDHIOL6Jeie2i7ka6sPQVro=" crossorigin="anonymous"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" integrity="sha256-nRoO8HoupfqozUr7YKBRgHXmdx40Hl/04OSBzv7e7L8=" crossorigin="anonymous"></script>
 </head>
 <body>
   <nav class="menu">
@@ -37,7 +35,6 @@
         <ul>
           <li><a class="app-insert-shift" href="#">Insert Shift</a></li>
           <li><a class="app-append-day" href="#">Append Day</a></li>
-          <li><a class="app-append-days" href="#">Fill Month</a></li>
           <li><hr /></li>
           <li><a class="app-delete-row" href="#">Delete Row</a></li>
         </ul>
@@ -59,10 +56,15 @@
           <li><a href="#" class="ivy-export-json">JSON</a></li>
         </ul>
       </li>
+      <li><a href="#">Import</a>
+        <ul>
+          <li><a href="#" class="ivy-import-csv">CSV</a></li>
+          <li><a href="#" class="ivy-import-json">JSON</a></li>
+        </ul>
+      </li>
       <li><a href="#">Contact</a>
         <ul>
           <li><a href="https://github.com/DaveJarvis/timeivy/issues" target="_blank">Bug report</a></li>
-          <li><a href="mailto:Dave.Jarvis@gmail.com?subject=Time%20Ivy">Support</a></li>
         </ul>
       </li>
       <li><a href="#">Help</a>
@@ -77,11 +79,11 @@
     <table id="ivy" class="ivy" cellspacing="0" cellpadding="0">
       <thead>
         <tr>
-          <th><button accesskey="d" title="Append Day" class="ivy app-append-day">Day</button></th>
+          <th class="ivy-readonly"><button accesskey="d" title="Append Day" class="ivy app-append-day">Day</button></th>
+          <th class="ivy-transient">Total</th>
+          <th class="ivy-transient"><button accesskey="i" title="Insert Shift" class="ivy app-insert-shift">Shift</button></th>
           <th>Began</th>
           <th>Ended</th>
-          <th><button accesskey="i" title="Insert Shift" class="ivy app-insert-shift">Shift</button></th>
-          <th>Total</th>
       </tr>
       </thead>
       <tbody tabindex="0">
@@ -93,12 +95,9 @@
     </div>
   </div>
 
-  <script src="js/ivy.min.js"></script>
-<!--
   <script src="js/prototypes.js"></script>
   <script src="js/ivy-plugin.js"></script>
   <script src="js/exportable-plugin.js"></script>
   <script src="js/ivy-app.js"></script>
-  -->
-  </body>
+</body>
 </html>

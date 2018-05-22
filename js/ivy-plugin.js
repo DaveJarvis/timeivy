@@ -462,6 +462,17 @@
       return max;
     },
     /**
+     * Primitive to return the number of table rows.
+     *
+     * @return {number} The number of table rows.
+     * @public
+     */
+    getRowCount: function() {
+      let table = this.getTableBodyElement();
+
+      return table.rows.length;
+    },
+    /**
      * Answers whether the table has any rows with data to edit.
      *
      * @return {boolean} True means the table has rows.
@@ -1002,10 +1013,7 @@
      * @public
      */
     editDeleteRow: function() {
-      // Don't delete the last row.
-      if( this.getMaxRows() > 0 ) {
-        this.execute( new CommandDeleteRow( this ) );
-      }
+      this.execute( new CommandDeleteRow( this ) );
     },
     /**
      * Appends a new row to the end.
@@ -1393,8 +1401,12 @@
 
 				html += "<td";
         
-        if( classes.length > 0 ) {
+        if( typeof classes !== 'undefined' && classes.length > 0 ) {
           html += " class='" + classes + "'";
+        }
+
+        if( typeof content === 'undefined' ) {
+          content = "";
         }
 
         html += ">" + content + "</td>";
