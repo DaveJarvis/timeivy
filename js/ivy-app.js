@@ -230,6 +230,12 @@
       $head.append( html );
     },
     /**
+     * Creates the first day for a timesheet, based on today's date.
+     */
+    createTimesheet: function() {
+      return JSON.stringify( {} );
+    },
+    /**
      * Reads data from local storage and drops in the information by month.
      */
     initTimesheet: function() {
@@ -238,7 +244,13 @@
 
       let cssTransient = plugin.settings.classCellTransient;
       let cssReadOnly = plugin.settings.classCellReadOnly;
-      let timesheet = JSON.parse( this.loadTimesheet() );
+      let jsonTimesheet = self.loadTimesheet();
+
+      if( typeof jsonTimesheet === 'undefined' ) {
+        jsonTimesheet = self.createTimesheet();
+      }
+
+      let timesheet = JSON.parse( jsonTimesheet );
       let css = [];
 
       $.each( timesheet, function() {
@@ -287,14 +299,24 @@
      * Fills out the month's remaining days according to user preferences.
      */
     fillTimesheet: function( css ) {
-      console.log( "fill timesheet" );
-
       let self = this;
       let plugin = self.getPlugin();
       let prefs = self.getPreferences();
 
-      let date = $(plugin.getCellLastRow( COL_DATED )).text();
-      let day = moment( date );
+      // If there are no rows in the spreadsheet, then populate the first
+      // day of this month (so that the next date can be calculated).
+      let tally = plugin.getRowCount();
+      let day = moment().startOf( 'month' );
+
+      // If the spreadsheet has data, it means that it was loaded from
+      // disk.
+      if( tally > 0 ) {
+        let date = $(plugin.getCellLastRow( COL_DATED )).text();
+        day = moment( date );
+      }
+
+      // This line will fail if the spreadsheet doesn't have at least one
+      // row of data.
       let next = day.clone().add( 1, "month" );
       let date_format = prefs.formats.format_date;
 
