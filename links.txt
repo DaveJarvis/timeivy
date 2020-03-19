@@ -1,0 +1,7 @@
+https://ipfs-sec.stackexchange.cloudflare-ipfs.com/tex/A/question/125028.html
+
+https://stackoverflow.com/questions/30456239/finding-color-spaces-in-pdf-from-linux-command-line
+
+https://unix.stackexchange.com/questions/52064/how-do-i-extract-the-colours-from-a-pdf
+
+https://stackoverflow.com/questions/35596346/ghostscript-convert-pdf-into-cmyk-preserving-pure-black-for-text
